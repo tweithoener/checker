@@ -9,6 +9,7 @@ import (
 	chkr "github.com/tweithoener/checker"
 )
 
+// LessArgs defines the arguments for a Less notifier wrapper.
 type LessArgs struct {
 	Notifier chkr.NotifierConfig
 }
@@ -43,6 +44,7 @@ func (lessMaker) FromConfig(c chkr.NotifierConfig) (chkr.Notifier, error) {
 	return Less(inner), nil
 }
 
+// Less returns a notifier that wraps another notifier, rate-limiting the notifications.
 func Less(n chkr.Notifier) chkr.Notifier {
 	var last time.Time
 	return func(ctx context.Context, name string, h chkr.History) {

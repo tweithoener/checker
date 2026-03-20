@@ -8,6 +8,7 @@ import (
 	chkr "github.com/tweithoener/checker"
 )
 
+// FailArgs defines the arguments for a Fail check wrapper.
 type FailArgs struct {
 	chkr.WithRecursion
 	Check chkr.CheckConfig
@@ -43,6 +44,7 @@ func (failMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 	return Fail(inner), nil
 }
 
+// Fail returns a check that wraps another check, inverting its success/fail result.
 func Fail(chk chkr.Check) chkr.Check {
 	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
 		s, msg := chk(ctx, h)

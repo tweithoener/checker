@@ -9,6 +9,7 @@ import (
 	chkr "github.com/tweithoener/checker"
 )
 
+// LoggingArgs defines the arguments for a Logging notifier.
 type LoggingArgs struct {
 	Prefix string
 }
@@ -37,6 +38,7 @@ func (loggingMaker) FromConfig(c chkr.NotifierConfig) (chkr.Notifier, error) {
 	return Logging(args.Prefix), nil
 }
 
+// Logging returns a notifier that outputs check results to the standard log.
 func Logging(prefix string) chkr.Notifier {
 	return func(_ context.Context, name string, h chkr.History) {
 		log.Printf("%s%s: %s", prefix, name, h)

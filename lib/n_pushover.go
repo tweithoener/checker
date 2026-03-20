@@ -10,6 +10,7 @@ import (
 	chkr "github.com/tweithoener/checker"
 )
 
+// PushoverArgs defines the arguments for a Pushover notifier.
 type PushoverArgs struct {
 	Prefix    string
 	App       string
@@ -40,6 +41,7 @@ func (pushoverMaker) FromConfig(c chkr.NotifierConfig) (chkr.Notifier, error) {
 	return Pushover(args.Prefix, args.App, args.Recipient), nil
 }
 
+// Pushover returns a notifier that sends messages to the Pushover service.
 func Pushover(prefix, app, recipient string) chkr.Notifier {
 	puApp := po.New(app)
 	puRecipient := po.NewRecipient(recipient)

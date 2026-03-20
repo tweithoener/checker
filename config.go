@@ -6,6 +6,7 @@ import (
 	"io"
 )
 
+// CheckerConfig holds the configuration for a Checker instance.
 type CheckerConfig struct {
 	Interval  int
 	Server    bool
@@ -13,41 +14,49 @@ type CheckerConfig struct {
 	Notifiers []NotifierConfig
 }
 
+// CheckConfig defines the configuration for a specific check.
 type CheckConfig struct {
 	Maker string
 	Name  string
 	Args  any
 }
 
+// NotifierConfig defines the configuration for a specific notifier.
 type NotifierConfig struct {
 	Maker string
 	Args  any
 }
 
+// CheckMaker is an interface for creating checks from configuration.
 type CheckMaker interface {
 	Maker() string
 	FromConfig(c CheckConfig) (Check, error)
 	UnmarshalArgs(j json.RawMessage) (any, error)
 }
 
+// NotifierMaker is an interface for creating notifiers from configuration.
 type NotifierMaker interface {
 	Maker() string
 	FromConfig(c NotifierConfig) (Notifier, error)
 	UnmarshalArgs(j json.RawMessage) (any, error)
 }
 
+// ArgsUnmarshaler is an interface for unmarshaling JSON arguments.
 type ArgsUnmarshaler interface {
 	Maker() string
 	UnmarshalArgs(j json.RawMessage) (any, error)
 }
 
+// WithRecursion provides recursive parsing capabilities for nested configurations.
 type WithRecursion struct {
 }
 
+// CheckRecursion evaluates a nested CheckConfig into a Check.
 func (wr *WithRecursion) CheckRecursion(cc CheckConfig) (Check, error) {
 	return checkFromConfig(cc)
 }
 
+// NotifierRecursion evaluates a nested NotifierConfig into a Notifier.
 func (wr *WithRecursion) NotifierRecursion(nc NotifierConfig) (Notifier, error) {
 	return notifierFromConfig(nc)
 }
@@ -56,6 +65,7 @@ var checkMakers = make(map[string]CheckMaker)
 var notifierMakers = make(map[string]NotifierMaker)
 var argsUnmarshaler = make(map[string]ArgsUnmarshaler)
 
+// AddCheckMaker registers one or more CheckMaker instances.
 func AddCheckMaker(ms ...CheckMaker) error {
 	for _, m := range ms {
 		if _, ok := checkMakers[m.Maker()]; ok {
@@ -67,6 +77,7 @@ func AddCheckMaker(ms ...CheckMaker) error {
 	return nil
 }
 
+// AddNotifierMaker registers one or more NotifierMaker instances.
 func AddNotifierMaker(ms ...NotifierMaker) error {
 	for _, m := range ms {
 		if _, ok := notifierMakers[m.Maker()]; ok {
@@ -78,6 +89,7 @@ func AddNotifierMaker(ms ...NotifierMaker) error {
 	return nil
 }
 
+// ReadConfig loads the Checker configuration from the provided io.Reader.
 func (chkr *Checker) ReadConfig(r io.Reader) error {
 	dec := json.NewDecoder(r)
 	conf := CheckerConfig{}
@@ -125,6 +137,7 @@ func notifierFromConfig(nc NotifierConfig) (Notifier, error) {
 	return not, nil
 }
 
+// UnmarshalJSON customizes the JSON unmarshaling for CheckConfig.
 func (c *CheckConfig) UnmarshalJSON(b []byte) error {
 	cc := struct {
 		Maker string
@@ -148,6 +161,7 @@ func (c *CheckConfig) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalJSON customizes the JSON unmarshaling for NotifierConfig.
 func (n *NotifierConfig) UnmarshalJSON(b []byte) error {
 	nc := struct {
 		Maker string

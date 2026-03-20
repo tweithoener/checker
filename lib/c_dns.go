@@ -11,6 +11,7 @@ import (
 	chkr "github.com/tweithoener/checker"
 )
 
+// DnsArgs defines the arguments for a DNS check.
 type DnsArgs struct {
 	Dns      string
 	Hostname string
@@ -41,6 +42,7 @@ func (dnsMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 	return Dns(args.Dns, args.Hostname, args.Address), nil
 }
 
+// Dns returns a check that verifies the resolution of a hostname to a specific address using a given DNS server.
 func Dns(dns, hostname, address string) chkr.Check {
 	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
 		r := net.Resolver{

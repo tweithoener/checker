@@ -9,6 +9,7 @@ import (
 	chkr "github.com/tweithoener/checker"
 )
 
+// HttpArgs defines the arguments for an HTTP check.
 type HttpArgs struct {
 	Method   string
 	Url      string
@@ -39,6 +40,7 @@ func (httpMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 	return Http(args.Method, args.Url, args.Expected), nil
 }
 
+// Http returns a check that performs an HTTP request and expects a specific status code.
 func Http(method, url string, expected int) chkr.Check {
 	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
 		req, err := http.NewRequestWithContext(ctx, method, url, nil)

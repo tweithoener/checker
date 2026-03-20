@@ -8,10 +8,13 @@ import (
 	"time"
 )
 
+// Check defines the signature for a health check function.
 type Check func(ctx context.Context, h History) (s State, message string)
 
+// Notifier defines the signature for a notification handler.
 type Notifier func(ctx context.Context, name string, h History)
 
+// Checker manages checks and notifiers, executing them at a configured interval.
 type Checker struct {
 	checks    []*meta
 	notifiers []Notifier
@@ -23,6 +26,7 @@ type Checker struct {
 	cancel context.CancelFunc
 }
 
+// State represents the result state of a check.
 type State string
 
 const (
@@ -32,7 +36,7 @@ const (
 	Skipped State = "Skipped"
 )
 
-// History provides historic information for a chec.
+// History provides historic information for a check.
 type History interface {
 	Last(s State) time.Time
 	State() State
@@ -43,6 +47,7 @@ type History interface {
 	String() string
 }
 
+// New initializes and returns a new Checker.
 func New() *Checker {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Checker{
@@ -55,6 +60,7 @@ func New() *Checker {
 	}
 }
 
+// AddCheck registers a new check with the specified name.
 func (chkr *Checker) AddCheck(name string, chk Check) {
 	chkr.checks = append(chkr.checks, &meta{
 		call: chk,
@@ -70,10 +76,12 @@ func (chkr *Checker) AddCheck(name string, chk Check) {
 	})
 }
 
+// AddNotifier registers a new notifier.
 func (chkr *Checker) AddNotifier(n Notifier) {
 	chkr.notifiers = append(chkr.notifiers, n)
 }
 
+// Start begins the periodic execution of registered checks.
 func (chkr *Checker) Start() {
 	if len(chkr.checks) == 0 {
 		return
@@ -142,6 +150,7 @@ func (chkr *Checker) runCheck(meta *meta) {
 	}()
 }
 
+// Shutdown gracefully stops the Checker, bounded by the provided context.
 func (chkr *Checker) Shutdown(ctx context.Context) {
 	close(chkr.quit)
 
@@ -160,10 +169,12 @@ func (chkr *Checker) Shutdown(ctx context.Context) {
 	}
 }
 
+// SetInterval updates the duration between check executions.
 func (chkr *Checker) SetInterval(interval time.Duration) {
 	chkr.interval = interval
 }
 
+// State returns the aggregated state of all registered checks.
 func (chkr *Checker) State() State {
 	warn := false
 	for _, chk := range chkr.checks {

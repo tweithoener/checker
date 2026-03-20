@@ -13,6 +13,7 @@ import (
 	"golang.org/x/net/ipv4"
 )
 
+// PingArgs defines the arguments for a Ping check.
 type PingArgs struct {
 	Address    string
 	WarnMillis int
@@ -43,6 +44,7 @@ func (pingMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 	return Ping(args.Address, args.WarnMillis, args.FailMillis), nil
 }
 
+// Ping returns a check that verifies connectivity via ICMP echo requests.
 func Ping(address string, warnMillis, failMillis int) chkr.Check {
 	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
 		dest, err := net.ResolveIPAddr("ip4", address)

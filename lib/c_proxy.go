@@ -10,6 +10,7 @@ import (
 	chkr "github.com/tweithoener/checker"
 )
 
+// ProxyArgs defines the arguments for a proxy connectivity check.
 type ProxyArgs struct {
 	Method   string
 	Request  string
@@ -41,6 +42,7 @@ func (proxyMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 	return Proxy(args.Method, args.Request, args.Proxy, args.Expected), nil
 }
 
+// Proxy returns a check that performs an HTTP request through a specified proxy.
 func Proxy(method, request, proxy string, expected int) chkr.Check {
 	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
 		req, err := http.NewRequestWithContext(ctx, method, request, nil)
