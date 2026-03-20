@@ -1,0 +1,61 @@
+{
+  "Interval": 0,
+  "Server": false,
+  "Checks": [
+    {
+      "Maker": "Ping",
+      "Name": "Ping Fritzbox",
+      "Args": {
+        "Address": "192.168.0.1",
+        "WarnMillis": 20,
+        "FailMillis": 300
+      }
+    },
+    {
+      "Maker": "Http",
+      "Name": "Praxis Webserver",
+      "Args": {
+        "Method": "GET",
+        "Url": "http://gesundheitspraxis-ulm.de",
+        "Expected": 200
+      }
+    },
+    {
+      "Maker": "Dns",
+      "Name": "Fritzbox DNS",
+      "Args": {
+        "DNS": "192.168.0.1",
+        "Hostname": "neuer.fritz.box",
+        "Address": "192.168.0.45"
+      }
+    },
+    {
+      "Maker": "Fail",
+      "Name": "Failed Http",
+      "Args": {
+        "Check": {
+          "Maker": "Http",
+          "Name": "",
+          "Args": {
+            "Method": "GET",
+            "Url": "http://gesundheitspraxis-ulm.de/gibtsnicht",
+            "Expected": 200
+          }
+        }
+      }
+    }
+  ],
+  "Notifiers": [
+    {
+      "Maker": "Less",
+      "Args": {
+        "Notifier": {
+          "Maker": "Logging",
+          "Args": {
+            "Prefix": ""
+          }
+        }
+      }
+    }
+  ]
+}

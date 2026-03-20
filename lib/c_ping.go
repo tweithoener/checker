@@ -1,11 +1,10 @@
-package check
+package lib
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
-	"net/http"
-	"net/url"
 	"os"
 	"time"
 
@@ -13,6 +12,36 @@ import (
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
 )
+
+type PingArgs struct {
+	Address    string
+	WarnMillis int
+	FailMillis int
+}
+
+type pingMaker struct{}
+
+var pingMkr = pingMaker{}
+
+func (pingMaker) Maker() string {
+	return "Ping"
+}
+
+func (pingMaker) UnmarshalArgs(j json.RawMessage) (any, error) {
+	args := PingArgs{}
+	if err := json.Unmarshal(j, &args); err != nil {
+		return args, fmt.Errorf("can't unmarshal Ping arguments: %v", err)
+	}
+	return args, nil
+}
+
+func (pingMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
+	args, ok := c.Args.(PingArgs)
+	if !ok {
+		return nil, fmt.Errorf("configured arguments are not Ping arguments")
+	}
+	return Ping(args.Address, args.WarnMillis, args.FailMillis), nil
+}
 
 func Ping(address string, warnMillis, failMillis int) chkr.Check {
 	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
@@ -105,63 +134,5 @@ func Ping(address string, warnMillis, failMillis int) chkr.Check {
 			}
 			return chkr.OK, msg
 		}
-	}
-}
-
-func HTTPCheck(method, url string, expected int) chkr.Check {
-	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
-		req, err := http.NewRequestWithContext(ctx, method, url, nil)
-		if err != nil {
-			return chkr.Fail, fmt.Sprintf("Failed to create request: %v", err)
-		}
-
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return chkr.Fail, fmt.Sprintf("Request failed: %v", err)
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != expected {
-			return chkr.Fail, fmt.Sprintf("Unexpected status code: %d (expected %d)", resp.StatusCode, expected)
-		}
-
-		return chkr.OK, ""
-	}
-}
-
-func HTTPProxy(method, request, proxy string, expected int) chkr.Check {
-	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
-		req, err := http.NewRequestWithContext(ctx, method, request, nil)
-		if err != nil {
-			return chkr.Fail, fmt.Sprintf("Failed to create request: %v", err)
-		}
-
-		proxyUrl, err := url.Parse(proxy)
-		if err != nil {
-			return chkr.Fail, fmt.Sprintf("Failed to parse proxy URL: %v", err)
-		}
-		cl := http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)}}
-		resp, err := cl.Do(req)
-		if err != nil {
-			return chkr.Fail, fmt.Sprintf("Request failed: %v", err)
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != expected {
-			return chkr.Fail, fmt.Sprintf("Unexpected status code: %d (expected %d)", resp.StatusCode, expected)
-		}
-
-		return chkr.OK, ""
-	}
-}
-
-func Fail(chk chkr.Check) chkr.Check {
-	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
-		s, msg := chk(ctx, h)
-		if s != chkr.Fail {
-			return chkr.Fail, fmt.Sprintf("Check was supposed to fail but did not: %s %s", s, msg)
-		}
-
-		return chkr.OK, fmt.Sprintf("Check failed as expected: %s %s", s, msg)
 	}
 }

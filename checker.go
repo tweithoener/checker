@@ -2,6 +2,7 @@ package checker
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -11,23 +12,55 @@ type Check func(ctx context.Context, h History) (s State, message string)
 
 type Notifier func(ctx context.Context, name string, h History)
 
+type Checker struct {
+	checks    []*meta
+	notifiers []Notifier
+	interval  time.Duration
+
+	wg     sync.WaitGroup
+	quit   chan struct{}
+	ctx    context.Context
+	cancel context.CancelFunc
+}
+
+type State string
+
+const (
+	OK      State = "OK"
+	Warn    State = "Warning"
+	Fail    State = "Failed"
+	Skipped State = "Skipped"
+)
+
+// History provides historic information for a chec.
+type History interface {
+	Last(s State) time.Time
+	State() State
+	Since() time.Time
+	Message() string
+	Streak() int
+	Name() string
+	String() string
+}
+
 func New() *Checker {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Checker{
 		checks:    []*meta{},
 		notifiers: []Notifier{},
+		interval:  5 * time.Minute,
 		quit:      make(chan struct{}),
 		ctx:       ctx,
 		cancel:    cancel,
 	}
 }
 
-func (chkr *Checker) Add(name string, chk Check) *Checker {
+func (chkr *Checker) AddCheck(name string, chk Check) {
 	chkr.checks = append(chkr.checks, &meta{
-		name: name,
 		call: chk,
 
 		history: history{
+			name:    name,
 			last:    make(map[State]time.Time),
 			state:   OK,
 			since:   time.Now(),
@@ -35,15 +68,13 @@ func (chkr *Checker) Add(name string, chk Check) *Checker {
 			streak:  0,
 		},
 	})
-	return chkr
 }
 
-func (chkr *Checker) AddNotifier(n Notifier) *Checker {
+func (chkr *Checker) AddNotifier(n Notifier) {
 	chkr.notifiers = append(chkr.notifiers, n)
-	return chkr
 }
 
-func (chkr *Checker) Start(every time.Duration) {
+func (chkr *Checker) Start() {
 	if len(chkr.checks) == 0 {
 		return
 	}
@@ -52,7 +83,7 @@ func (chkr *Checker) Start(every time.Duration) {
 		defer chkr.wg.Done()
 
 		cnt := len(chkr.checks)
-		te := every / time.Duration(cnt)
+		te := chkr.interval / time.Duration(cnt)
 		ticker := time.NewTicker(te)
 		defer ticker.Stop()
 
@@ -111,7 +142,7 @@ func (chkr *Checker) runCheck(meta *meta) {
 	}()
 }
 
-func (chkr *Checker) Stop(ctx context.Context) {
+func (chkr *Checker) Shutdown(ctx context.Context) {
 	close(chkr.quit)
 
 	allDone := make(chan struct{})
@@ -129,35 +160,28 @@ func (chkr *Checker) Stop(ctx context.Context) {
 	}
 }
 
-type Checker struct {
-	checks    []*meta
-	notifiers []Notifier
-
-	wg     sync.WaitGroup
-	quit   chan struct{}
-	ctx    context.Context
-	cancel context.CancelFunc
+func (chkr *Checker) SetInterval(interval time.Duration) {
+	chkr.interval = interval
 }
 
-type State string
-
-const (
-	OK      State = "OK"
-	Warn    State = "Warning"
-	Fail    State = "Failed"
-	Skipped State = "Skipped"
-)
-
-// History provides historic information for a chec.
-type History interface {
-	Last(s State) time.Time
-	State() State
-	Since() time.Time
-	Message() string
-	Streak() int
+func (chkr *Checker) State() State {
+	warn := false
+	for _, chk := range chkr.checks {
+		if chk.state == Fail {
+			return Fail
+		}
+		if chk.state == Warn {
+			warn = true
+		}
+	}
+	if warn {
+		return Warn
+	}
+	return OK
 }
 
 type history struct {
+	name    string
 	last    map[State]time.Time
 	since   time.Time
 	message string
@@ -168,10 +192,12 @@ type history struct {
 type meta struct {
 	history
 
-	mu sync.Mutex
-
-	name string
+	mu   sync.RWMutex
 	call Check
+}
+
+func (h *history) Name() string {
+	return h.name
 }
 
 func (h *history) Last(state State) time.Time {
@@ -194,6 +220,10 @@ func (h *history) Message() string {
 	return h.message
 }
 
+func (h *history) String() string {
+	return fmt.Sprintf("%s %s: %s (%d times since %s)", h.State(), h.Name(), h.Message(), h.Streak(), h.Since().Local().Format("2006-01-02 15:04:05"))
+}
+
 func (m *meta) snapshot() History {
 	snapSince := make(map[State]time.Time)
 	for k, v := range m.last {
@@ -205,5 +235,6 @@ func (m *meta) snapshot() History {
 		state:   m.state,
 		since:   m.since,
 		streak:  m.streak,
+		name:    m.name,
 	}
 }

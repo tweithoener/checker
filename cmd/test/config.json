@@ -1,0 +1,28 @@
+{
+  "Interval": 0,
+  "Server": false,
+  "Checks": [
+    {
+      "Maker": "Ping",
+      "Name": "Ping Fritzbox",
+      "Args": {
+        "Address": "192.168.0.1",
+        "WarnMillis": 20,
+        "FailMillis": 300
+      }
+    }
+  ],
+  "Notifiers": [
+    {
+      "Maker": "Less",
+      "Args": {
+        "Notifier": {
+          "Maker": "Logging",
+          "Args": {
+            "Prefix": ""
+          }
+        }
+      }
+    }
+  ]
+}
