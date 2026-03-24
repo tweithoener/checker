@@ -10,7 +10,8 @@ Monitoring systems often come with a steep learning curve, requiring you to unde
 - **No new syntax to learn:** It can be configured entirely in Go.
 - **IDE Support:** Because it's just Go code, you get full autocompletion, type safety, and debugging support right in your IDE.
 - **Keep it simple:** There are only **Checks** and **Notifiers**. No complex hierarchies. You define what to check and who to notify when the state changes. 
-- **JSON Configuration (Optional):** If you prefer, you can easily load your setup from a simple JSON file using the provided `lib` components.
+- **Standard Library** of commonly used checks - ready to be included into your Checker monitoring project. See the [Standard Library Documentation (`lib/README.md`)](lib/README.md) for a full list of available Checks (like HTTP, Ping, CPU, Memory) and Notifiers.
+- **JSON Configuration (Optional):** If you prefer, you can easily load your setup from a simple JSON file using the provided `lib` components. 
 - **Peer-to-Peer Monitoring:** Every Checker instance can act as a server. Instances can monitor each other, providing a decentralized and resilient monitoring network with summary reporting.
 
 ## Examples

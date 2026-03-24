@@ -48,7 +48,6 @@ func (sshMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 //
 // Note: Make sure public key authentication and host key authorization is configured correctly
 // for the user running checker for the remote machine.
-
 func Ssh(analyze func(exitCode int, output string) (chkr.State, string), host, user, command string) chkr.Check {
 	uh := host
 	if user != "" {
