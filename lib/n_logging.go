@@ -41,6 +41,6 @@ func (loggingMaker) FromConfig(c chkr.NotifierConfig) (chkr.Notifier, error) {
 // Logging returns a notifier that outputs check results to the standard log.
 func Logging(prefix string) chkr.Notifier {
 	return func(_ context.Context, name string, h chkr.History) {
-		log.Printf("%s%s: %s", prefix, name, h)
+		log.Printf("%s%s", prefix, h)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"sync"
 	"time"
 )
@@ -24,6 +25,9 @@ type Checker struct {
 	quit   chan struct{}
 	ctx    context.Context
 	cancel context.CancelFunc
+
+	serverConfig ServerConfig
+	httpServer   *http.Server
 }
 
 // State represents the result state of a check.
@@ -83,6 +87,8 @@ func (chkr *Checker) AddNotifier(n Notifier) {
 
 // Start begins the periodic execution of registered checks.
 func (chkr *Checker) Start() {
+	chkr.startHttpServer()
+
 	if len(chkr.checks) == 0 {
 		return
 	}
@@ -152,6 +158,7 @@ func (chkr *Checker) runCheck(meta *meta) {
 
 // Shutdown gracefully stops the Checker, bounded by the provided context.
 func (chkr *Checker) Shutdown(ctx context.Context) {
+	chkr.stopHttpServer(ctx)
 	close(chkr.quit)
 
 	allDone := make(chan struct{})

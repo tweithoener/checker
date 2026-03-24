@@ -1,0 +1,25 @@
+{
+  "Server": {
+    "Enabled": true,
+    "Listen": ":8080"
+  },
+  "Checks": [
+    {
+      "Maker": "Http",
+      "Name": "Server Web Check",
+      "Args": {
+        "Method": "GET",
+        "Url": "http://example.com",
+        "Expected": 202
+      }
+    }
+  ],
+  "Notifiers": [
+    {
+      "Maker": "Logging",
+      "Args": {
+        "Prefix": "[SERVER] "
+      }
+    }
+  ]
+}

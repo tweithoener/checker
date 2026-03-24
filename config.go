@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"time"
 )
 
 // CheckerConfig holds the configuration for a Checker instance.
 type CheckerConfig struct {
 	Interval  int
-	Server    bool
+	Server    ServerConfig
 	Checks    []CheckConfig
 	Notifiers []NotifierConfig
 }
@@ -25,6 +26,12 @@ type CheckConfig struct {
 type NotifierConfig struct {
 	Maker string
 	Args  any
+}
+
+// ServerConfig definies the configuration for the server for peer-to-peer monitoring
+type ServerConfig struct {
+	Enabled bool
+	Listen  string
 }
 
 // CheckMaker is an interface for creating checks from configuration.
@@ -96,6 +103,8 @@ func (chkr *Checker) ReadConfig(r io.Reader) error {
 	if err := dec.Decode(&conf); err != nil {
 		return fmt.Errorf("can't decode config: %v", err)
 	}
+	chkr.serverConfig = conf.Server
+	chkr.interval = time.Duration(conf.Interval) * time.Second
 	for _, cc := range conf.Checks {
 		chk, err := checkFromConfig(cc)
 		if err != nil {

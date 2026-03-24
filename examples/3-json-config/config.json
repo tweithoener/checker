@@ -1,0 +1,27 @@
+{
+  "Interval": 5,
+  "Checks": [
+    {
+      "Maker": "Http",
+      "Name": "Check My Website",
+      "Args": {
+        "Method": "GET",
+        "Url": "http://example.com",
+        "Expected": 200
+      }
+    }
+  ],
+  "Notifiers": [
+    {
+      "Maker": "Less",
+      "Args": {
+        "Notifier": {
+          "Maker": "Logging",
+          "Args": {
+            "Prefix": "ALERT: "
+          }
+        }
+      }
+    }
+  ]
+}

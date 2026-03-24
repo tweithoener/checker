@@ -1,0 +1,19 @@
+{
+  "Checks": [
+    {
+      "Maker": "Peer",
+      "Name": "Remote Server Checker",
+      "Args": {
+        "Address": "http://127.0.0.1:8080/"
+      }
+    }
+  ],
+  "Notifiers": [
+    {
+      "Maker": "Logging",
+      "Args": {
+        "Prefix": "[CLIENT] "
+      }
+    }
+  ]
+}

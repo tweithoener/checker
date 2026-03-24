@@ -11,6 +11,7 @@ Monitoring systems often come with a steep learning curve, requiring you to unde
 - **IDE Support:** Because it's just Go code, you get full autocompletion, type safety, and debugging support right in your IDE.
 - **Keep it simple:** There are only **Checks** and **Notifiers**. No complex hierarchies. You define what to check and who to notify when the state changes. 
 - **JSON Configuration (Optional):** If you prefer, you can easily load your setup from a simple JSON file using the provided `lib` components.
+- **Peer-to-Peer Monitoring:** Every Checker instance can act as a server. Instances can monitor each other, providing a decentralized and resilient monitoring network with summary reporting.
 
 ## Examples
 
@@ -61,9 +62,25 @@ func main() {
 }
 ```
 
-### 2. Using the Standard Library and JSON Configuration
+### 2. Using the Standard Library from Go
+The `checker/lib` package provides ready-to-use checks (like Ping, HTTP, DNS, etc.) and notifiers (like Logging, Pushover, Rate-Limiting).
+You can easily include these into your checker.
 
-The `checker/lib` package provides ready-to-use checks (like Ping, HTTP, DNS, etc.) and notifiers (like Logging, Pushover, Rate-Limiting). You can configure these easily via a JSON file.
+```go
+	...
+	
+	// 2. Add checks and notifier from the standard library
+	c.AddCheck("Ping Webserver", lib.Ping("example.com", 50, 300))
+	c.AddCheck("Check My Website ", lib.Http("GET", "https://example.com/", http.StatusOK))
+	c.AddNotifier(lib.Logging("ALERT: "))
+
+	...
+```
+
+
+### 3. Using the Standard Library and JSON Configuration
+
+The  checks from the Standard Library can also be configured easily via a JSON file.
 
 **`config.json`**
 ```json
@@ -137,3 +154,35 @@ func main() {
 	c.Shutdown(ctx)
 }
 ```
+
+### 4. Distributed Peer-to-Peer Monitoring
+
+Enable the built-in HTTP server on one instance and monitor it from another. This allows you to build a resilient monitoring grid where instances "watch the watchers".
+
+**Remote Instance (`config.json`):**
+```json
+{
+  "Server": {
+    "Enabled": true,
+    "Listen": ":8080"
+  },
+  "Checks": [ ... ]
+}
+```
+
+**Local Instance Monitoring the Remote (`config.json`):**
+```json
+{
+  "Checks": [
+    {
+      "Maker": "Peer",
+      "Name": "Remote Office Checker",
+      "Args": {
+        "Address": "http://192.168.1.50:8080/"
+      }
+    }
+  ]
+}
+```
+
+When the remote instance reports a non-OK state, the `Peer` check automatically summarizes the failure, showing the number of affected checks and the most recent error.

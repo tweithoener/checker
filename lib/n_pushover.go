@@ -46,7 +46,7 @@ func Pushover(prefix, app, recipient string) chkr.Notifier {
 	puApp := po.New(app)
 	puRecipient := po.NewRecipient(recipient)
 	return func(ctx context.Context, name string, h chkr.History) {
-		message := po.NewMessage(fmt.Sprintf("%s: %s", prefix, h))
+		message := po.NewMessage(fmt.Sprintf("%s%s", prefix, h))
 		message.Title = fmt.Sprintf("%s %s", h.State(), name)
 		switch h.State() {
 		case chkr.Fail:
