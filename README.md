@@ -1,25 +1,31 @@
-# Checker -- System Monitoring For Go Programmers
+# Checker 🚀 System Monitoring For Go Programmers
 
-A very simple, reduced, and lightweight replacement for complex monitoring systems like Nagios.
+Welcome to **Checker** — a refreshingly simple, dependency-light replacement for complex monitoring systems like Nagios or Zabbix.
 
-## Motivation
+## Why Checker?
 
-Monitoring systems often come with a steep learning curve, requiring you to understand complex abstractions like Hosts, HostGroups, Services, and ServiceGroups, along with custom configuration languages or DSLs.
+Monitoring systems often come with a steep learning curve. You're forced to wrestle with complex abstractions (Hosts, HostGroups, ServiceGroups) and decipher proprietary configuration languages or DSLs.
 
-**Checker** takes a different approach:
-- **No new syntax to learn:** It can be configured entirely in Go.
-- **IDE Support:** Because it's just Go code, you get full autocompletion, type safety, and debugging support right in your IDE.
-- **Keep it simple:** There are only **Checks** and **Notifiers**. No complex hierarchies. You define what to check and who to notify when the state changes.
-- **Standard Library:** A rich collection of commonly used checks (HTTP, Ping, CPU, Memory, SSH, etc.) is ready to be included. See the [Standard Library Documentation (`lib/README.md`)](lib/README.md) for a full list of available components.
-- **JSON Configuration (Optional):** If you prefer, you can easily load your entire setup from a simple JSON file using the provided `lib` components.
-- **Peer-to-Peer Monitoring:** Every Checker instance can act as a server. Instances can monitor each other, providing a decentralized and resilient monitoring network where peers exchange their global state trees.
+**Checker** takes a fundamentally different approach. We believe monitoring should be as straightforward as writing code:
 
-## Examples
+- 🧠 **No new DSL to learn, just use Go:** Configure your entire monitoring setup directly in Go.
+- 🛠️ **Native IDE Support:** Because it's just Go code, you get full autocompletion, type safety, and debugging support right out of the box.
+- 🎯 **Keep it Simple:** There are only **Checks** (what to monitor) and **Notifiers** (who to alert). No convoluted hierarchies.
+- 🔋 **Batteries Included:** A rich standard library (`checker/lib`) of ready-to-use checks (HTTP, Ping, CPU, Memory, SSH, DNS) and notifiers (Email, Logging, Pushover) is included.
+- 🌐 **Peer-to-Peer Monitoring:** Every Checker instance can act as a server. Build a decentralized, resilient monitoring grid where nodes exchange their global state trees seamlessly.
+- 📜 **JSON Configuration:** Prefer config files over binaries? Easily load your entire setup from a clean JSON file.
 
-### 1. A Simple Custom Check in Go
+---
 
-You can write your checks directly in Go. A check is simply a function that takes a context and the current `CheckState`, and returns a new state and a message.
+## Quick Start Guide
 
+We've designed Checker to get out of your way. Here are the most common ways to use it. You can find fully runnable versions of these snippets in the [`./examples`](./examples) directory!
+
+### 1. Write a Custom Check in Go
+
+Writing a custom check is as simple as defining a function that takes a context and returns a state. Perfect for checking your internal app health!
+
+*From `examples/1-custom-check/main.go`*
 ```go
 package main
 
@@ -32,41 +38,36 @@ import (
 )
 
 func main() {
-	// 1. Create a new Checker
+	// 1. Create a new Checker instance
 	c := chkr.New()
 
-	// 2. Add a custom check
+	// 2. Add your custom check logic
 	c.AddCheck("My Custom Check", func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
-		// Your custom logic here...
 		if time.Now().Second()%2 == 0 {
 			return chkr.OK, "Everything is fine"
 		}
 		return chkr.Fail, "Something went wrong!"
 	})
 
-	// 3. Add a simple notifier to print to the console
+	// 3. Add a simple console notifier
 	c.AddNotifier(func(ctx context.Context, name string, cs chkr.CheckState) {
-		fmt.Printf("[%s] %s is now: %s (%s)\n", time.Now().Format(time.TimeOnly), name, cs.State, cs.Message)
+		fmt.Printf("[%s] Check '%s' state changed to: %s (%s)\n", time.Now().Format(time.RFC3339), name, cs.State, cs.Message)
 	})
 
-	// 4. Set the check interval and start
+	// 4. Start the engine
 	c.SetInterval(2 * time.Second)
 	c.Start()
 
-	// Let it run for a while
 	time.Sleep(10 * time.Second)
-	
-	// Graceful shutdown
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	c.Shutdown(ctx)
+	c.Shutdown(context.Background())
 }
 ```
 
-### 2. Using the Standard Library from Go
+### 2. Use the Standard Library
 
-The `checker/lib` package provides ready-to-use checks (like Ping, HTTP, DNS, System Metrics) and notifiers (like Logging, Pushover, Rate-Limiting).
+Don't reinvent the wheel. The `checker/lib` package provides battle-tested checks and notifiers.
 
+*From `examples/2-library-checks/main.go`*
 ```go
 package main
 
@@ -82,22 +83,25 @@ import (
 func main() {
 	c := chkr.New()
 	
-	// Add checks and a notifier from the standard library
+	// Plug in robust checks with a single line
 	c.AddCheck("Ping Webserver", lib.Ping("example.com", 50, 300))
 	c.AddCheck("Check My Website", lib.Http("GET", "https://example.com/", http.StatusOK))
+	
+	// Add an out-of-the-box notifier
 	c.AddNotifier(lib.Logging("ALERT: "))
 
 	c.SetInterval(5 * time.Second)
 	c.Start()
-	// ... (Shutdown logic)
+	
+	// ... (Wait and Shutdown logic)
 }
 ```
 
-### 3. Using the Standard Library and JSON Configuration
+### 3. Data-Driven: JSON Configuration
 
-You can configure the exact same setup using a JSON file. This is perfect for deploying Checker as a standalone binary without recompiling.
+Deploy Checker as a standalone binary and configure it completely via JSON. No recompilation required!
 
-**`config.json`**
+*From `examples/3-json-config/config.json`*
 ```json
 {
   "Interval": 5,
@@ -114,21 +118,16 @@ You can configure the exact same setup using a JSON file. This is perfect for de
   ],
   "Notifiers": [
     {
-      "Maker": "Less",
+      "Maker": "Logging",
       "Args": {
-        "Notifier": {
-          "Maker": "Logging",
-          "Args": {
-            "Prefix": "ALERT: "
-          }
-        }
+        "Prefix": "ALERT: "
       }
     }
   ]
 }
 ```
 
-**`main.go`**
+*From `examples/3-json-config/main.go`*
 ```go
 package main
 
@@ -137,8 +136,7 @@ import (
 	"os"
 
 	chkr "github.com/tweithoener/checker"
-	// Blank import registers all standard checks and notifiers
-	_ "github.com/tweithoener/checker/lib"
+	_ "github.com/tweithoener/checker/lib" // Register all standard library makers
 )
 
 func main() {
@@ -158,42 +156,8 @@ func main() {
 }
 ```
 
-### 4. Distributed Peer-to-Peer Monitoring
+### 4. Distributed Peer-to-Peer Grid
 
-Enable the built-in HTTP server on one instance and monitor it from another. This allows you to build a resilient monitoring grid where instances "watch the watchers".
+Instances can monitor each other. Set `Server.Enabled: true` on Node A, and add it to the `Peers` array of Node B. 
 
-**Node A (Server):**
-```json
-{
-  "Interval": 10,
-  "Server": {
-    "Enabled": true,
-    "Listen": ":8080"
-  },
-  "Checks": [
-    {
-      "Maker": "Cpu",
-      "Name": "CPU Usage",
-      "Args": { "WarnPercent": 80, "FailPercent": 90 }
-    }
-  ]
-}
-```
-
-**Node B (Monitoring Node A):**
-```json
-{
-  "Interval": 10,
-  "Peers": [
-    "192.168.1.50:8080"
-  ],
-  "Notifiers": [
-    {
-      "Maker": "Logging",
-      "Args": { "Prefix": "GLOBAL-STATE: " }
-    }
-  ]
-}
-```
-
-When Node A reports a non-OK state, Node B automatically pulls that state, summarizes the failure, and triggers its own notifiers. By visiting `http://192.168.1.50:8080/` in your browser, you also get a neat HTML dashboard of the current health!
+When Node A detects a failure, Node B pulls that state and triggers its own notifiers. Plus, you get a beautiful HTML dashboard of your entire infrastructure just by visiting the server's port in your browser! See `examples/4-peer-to-peer/` for a full multi-node demo.

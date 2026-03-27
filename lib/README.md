@@ -1,44 +1,53 @@
-# Checker Standard Library (`lib`)
+# Checker Standard Library (`lib`) 🔋
 
-The `lib` package provides a robust collection of built-in **Checks** and **Notifiers** for the Checker framework. These components are automatically registered when the package is imported and can be easily configured via JSON or used directly in your Go code.
+Welcome to the **Standard Library** of the Checker ecosystem!
 
-## Available Checks
+Why write custom checks for common infrastructure when you can just plug and play? The `lib` package provides a robust collection of built-in checks and notifiers, ready to be used in your Go code or dynamically configured via JSON. No new DSL to learn, just pure Go!
+
+## 🕵️‍♂️ Available Checks
+
+Here is a glimpse of what you get out of the box:
 
 ### Network & Connectivity
-* **`Http`**: Performs an HTTP request (e.g., GET) and verifies that the response matches the expected status code (e.g., 200).
-* **`Ping`**: Sends ICMP echo requests to a specific IP address to verify connectivity. Allows configuration of warning and failure latency thresholds.
-* **`Dns`**: Verifies that a specific hostname resolves to an expected IP address using a custom DNS server.
-* **`Proxy`**: Performs an HTTP request through a specified proxy server and checks the response status code.
-* **`Peer`**: Connects to the built-in HTTP server of a remote Checker instance. It summarizes the remote state, alerting if any remote checks are failing or warning.
+* **`Http`**: Hits an HTTP/HTTPS endpoint and validates the expected status code.
+* **`Ping`**: Sends ICMP echo requests to measure latency and verify connectivity.
+* **`Dns`**: Queries a specific DNS server to verify domain resolution.
+* **`Proxy`**: Tests HTTP proxy servers to ensure they are forwarding requests correctly.
+* **`Peer`**: Connects to the built-in HTTP server of a remote Checker instance to monitor the watcher.
 
 ### System & Hardware (Powered by gopsutil)
-* **`Cpu`**: Monitors the total CPU usage percentage of the system.
-* **`Mem`**: Monitors the virtual memory (RAM) usage percentage.
-* **`Swap`**: Monitors the swap memory usage percentage.
-* **`Disk`**: Monitors the disk space usage percentage on a specific path (e.g., `/`).
+* **`Cpu`**: Monitors CPU utilization and alerts on high load.
+* **`Mem`**: Tracks virtual memory (RAM) usage.
+* **`Disk`**: Keeps an eye on your disk space usage.
 * **`Load`**: Monitors the 5-minute system load average.
-* **`Uptime`**: Verifies that the system has been running for at least a specified minimum time (useful for detecting unexpected reboots).
+* **`Swap`**: Monitors swap memory usage.
+* **`Uptime`**: Ensures the system has been running for a minimum required time.
 
 ### Processes & Execution
-* **`ProcExists`**: Verifies if at least one process with the exact given name (e.g., `nginx`) is currently running.
-* **`SysProcs`**: Monitors the total number of running processes on the system to prevent PID exhaustion.
-* **`Cmd`**: Executes a local shell command and evaluates its exit status.
-* **`Ssh`**: Connects to a remote host via SSH and can execute commands to verify remote state.
+* **`Cmd`**: Executes any local CLI command and analyzes its exit code or stdout.
+* **`Ssh`**: Attempts to connect, authenticate, and run commands against an SSH server.
+* **`ProcExists`**: Verifies if a vital background process (e.g., `nginx`, `postgres`) is currently running.
+* **`SysProcs`**: Tracks the total number of running processes to detect fork bombs or leaks.
 
 ### Utilities
-* **`Fail`**: A wrapper check that inverts the result of another check. It succeeds only if the inner check fails (useful for testing negative scenarios, e.g., verifying an endpoint is *not* reachable).
+* **`Fail`**: A meta-check useful for debugging or recursive logic.
 
 ---
 
-## Available Notifiers
+## 📢 Available Notifiers
 
-* **`Logging`**: A simple notifier that outputs check results to the standard Go log, prepended with a custom prefix.
-* **`Pushover`**: Sends real-time push notifications to your mobile devices using the Pushover service. It routes different states (Fail, Warn, OK) with varying priorities and notification sounds.
-* **`Less`**: A wrapper notifier that rate-limits notifications from an inner notifier. It prevents alert fatigue by suppressing repeated alerts for the same state, only notifying on state changes or after a prolonged period (hourly).
+When things go wrong, you need to know immediately.
 
-## Usage Example (Go)
+* **`Email`**: Sends full-featured, customizable HTML or plaintext alerts via SMTP.
+* **`Pushover`**: Sends real-time push notifications straight to your phone, complete with priority routing and custom notification sounds!
+* **`Logging`**: The classic. Dumps check results to the standard Go log with a custom prefix.
+* **`Less`**: A smart meta-notifier that limits alert spam.
 
-The primary way to use Checker is directly within your Go code. This provides type safety, autocompletion, and the ability to seamlessly mix built-in checks with your own custom logic.
+## 🛠️ Usage
+
+### From Go Code
+
+Using the standard library directly in your Go code gives you perfect type safety and IDE support:
 
 ```go
 package main
@@ -69,9 +78,9 @@ func main() {
 }
 ```
 
-## Usage Example (JSON)
+### From JSON Configuration
 
-Alternatively, you can easily mix and match these components using a JSON configuration file:
+Prefer no recompiles? You can define everything in a `config.json`. The `lib` package automatically registers "Makers" for all components during initialization.
 
 ```json
 {
@@ -83,14 +92,6 @@ Alternatively, you can easily mix and match these components using a JSON config
         "Method": "GET",
         "Url": "https://api.example.com/health",
         "Expected": 200
-      }
-    },
-    {
-      "Maker": "Cpu",
-      "Name": "System CPU",
-      "Args": {
-        "WarnPercent": 75.0,
-        "FailPercent": 90.0
       }
     }
   ],
@@ -110,4 +111,10 @@ Alternatively, you can easily mix and match these components using a JSON config
     }
   ]
 }
+```
+
+Just remember to blank-import the lib package in your `main.go` so the init hooks fire:
+
+```go
+import _ "github.com/tweithoener/checker/lib"
 ```
