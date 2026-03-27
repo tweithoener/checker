@@ -2,6 +2,7 @@ package checker
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -11,6 +12,7 @@ import (
 type CheckerConfig struct {
 	Interval  int
 	Server    ServerConfig
+	Peers     []string
 	Checks    []CheckConfig
 	Notifiers []NotifierConfig
 }
@@ -98,6 +100,10 @@ func AddNotifierMaker(ms ...NotifierMaker) error {
 
 // ReadConfig loads the Checker configuration from the provided io.Reader.
 func (chkr *Checker) ReadConfig(r io.Reader) error {
+	if chkr.running {
+		return errors.New("can't change configuration while checker is running")
+	}
+
 	dec := json.NewDecoder(r)
 	conf := CheckerConfig{}
 	if err := dec.Decode(&conf); err != nil {
@@ -110,14 +116,23 @@ func (chkr *Checker) ReadConfig(r io.Reader) error {
 		if err != nil {
 			return err
 		}
-		chkr.AddCheck(cc.Name, chk)
+		if err := chkr.AddCheck(cc.Name, chk); err != nil {
+			return fmt.Errorf("can't add check '%s': %v", cc.Name, err)
+		}
+	}
+	for _, p := range conf.Peers {
+		if err := chkr.AddPeer(p); err != nil {
+			return fmt.Errorf("can't add peer '%s': %v", p, err)
+		}
 	}
 	for _, nc := range conf.Notifiers {
 		not, err := notifierFromConfig(nc)
 		if err != nil {
 			return err
 		}
-		chkr.AddNotifier(not)
+		if err := chkr.AddNotifier(not); err != nil {
+			return fmt.Errorf("can't add notifier: %v", err)
+		}
 	}
 	return nil
 }

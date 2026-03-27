@@ -1,16 +1,26 @@
 {
   "Server": {
     "Enabled": true,
-    "Listen": ":8080"
+    "Listen": "0.0.0.0:8080"
   },
+  "Peers": [ "localhost:8081" ],
   "Checks": [
     {
       "Maker": "Http",
-      "Name": "Server Web Check",
+      "Name": "Web Check",
       "Args": {
         "Method": "GET",
         "Url": "http://example.com",
         "Expected": 202
+      }
+    },
+    {
+      "Maker": "Http",
+      "Name": "Web Check 404",
+      "Args": {
+        "Method": "GET",
+        "Url": "http://example.com/unknown",
+        "Expected": 404
       }
     }
   ],

@@ -45,7 +45,7 @@ func Disk(path string, warnPercent, failPercent float64) chkr.Check {
 	if path == "" {
 		path = "/"
 	}
-	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
+	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
 		u, err := disk.UsageWithContext(ctx, path)
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Failed to get disk stats for %s: %v", path, err)

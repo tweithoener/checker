@@ -44,7 +44,7 @@ func (proxyMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 
 // Proxy returns a check that performs an HTTP request through a specified proxy.
 func Proxy(method, request, proxy string, expected int) chkr.Check {
-	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
+	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
 		req, err := http.NewRequestWithContext(ctx, method, request, nil)
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Failed to create request: %v", err)

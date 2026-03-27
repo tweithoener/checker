@@ -47,10 +47,10 @@ func (lessMaker) FromConfig(c chkr.NotifierConfig) (chkr.Notifier, error) {
 // Less returns a notifier that wraps another notifier, rate-limiting the notifications.
 func Less(n chkr.Notifier) chkr.Notifier {
 	var last time.Time
-	return func(ctx context.Context, name string, h chkr.History) {
-		if time.Since(last) > 1*time.Hour || h.Streak() <= 3 {
+	return func(ctx context.Context, name string, cs chkr.CheckState) {
+		if time.Since(last) > 1*time.Hour || cs.Streak <= 3 {
 			last = time.Now()
-			n(ctx, name, h)
+			n(ctx, name, cs)
 		}
 	}
 }

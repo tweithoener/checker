@@ -51,7 +51,7 @@ func defaultAnalyzer(exitCode int, output string) (chkr.State, string) {
 // called command (non zero exit code results in a failed check).
 // Note: The default analyzer is also used when configuring this check using a json config file with checker.ReadConfig.
 func Cmd(analyze func(exitCode int, output string) (chkr.State, string), name string, args ...string) chkr.Check {
-	return func(ctx context.Context, h chkr.History) (s chkr.State, message string) {
+	return func(ctx context.Context, cs chkr.CheckState) (s chkr.State, message string) {
 		if analyze != nil {
 			analyze = defaultAnalyzer
 		}

@@ -46,8 +46,8 @@ func (failMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 
 // Fail returns a check that wraps another check, inverting its success/fail result.
 func Fail(chk chkr.Check) chkr.Check {
-	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
-		s, msg := chk(ctx, h)
+	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
+		s, msg := chk(ctx, cs)
 		if s != chkr.Fail {
 			return chkr.Fail, fmt.Sprintf("Check was supposed to fail but did not: %s %s", s, msg)
 		}

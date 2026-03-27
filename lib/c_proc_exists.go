@@ -40,7 +40,7 @@ func (procExistsMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 
 // ProcExists returns a check that verifies if at least one process with the exact given name is running.
 func ProcExists(name string) chkr.Check {
-	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
+	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
 		procs, err := process.ProcessesWithContext(ctx)
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Failed to list processes: %v", err)

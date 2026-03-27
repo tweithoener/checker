@@ -41,7 +41,7 @@ func (uptimeMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 
 // Uptime returns a check that verifies the system's uptime and warns if it's lower than a minimum (e.g. after a reboot).
 func Uptime(minUptime time.Duration) chkr.Check {
-	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
+	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
 		uptimeSecs, err := host.UptimeWithContext(ctx)
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Failed to get uptime: %v", err)

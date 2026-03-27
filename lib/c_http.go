@@ -42,7 +42,7 @@ func (httpMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 
 // Http returns a check that performs an HTTP request and expects a specific status code.
 func Http(method, url string, expected int) chkr.Check {
-	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
+	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
 		req, err := http.NewRequestWithContext(ctx, method, url, nil)
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Failed to create request: %v", err)

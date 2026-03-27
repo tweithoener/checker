@@ -44,7 +44,7 @@ func (dnsMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 
 // Dns returns a check that verifies the resolution of a hostname to a specific address using a given DNS server.
 func Dns(dns, hostname, address string) chkr.Check {
-	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
+	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
 		r := net.Resolver{
 			PreferGo: true,
 			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {

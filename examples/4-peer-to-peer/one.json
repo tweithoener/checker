@@ -1,0 +1,25 @@
+{
+  "Server": {
+    "Enabled": true,
+    "Listen": "0.0.0.0:8081"
+  },
+  "Peers": [ "localhost:8080" ],
+  "Checks": [
+    {
+      "Maker": "Cpu",
+      "Name": "CPU Load",
+      "Args": {
+        "WarnPercent": 30,
+        "FailPercent": 80
+      }
+    }
+  ],
+  "Notifiers": [
+    {
+      "Maker": "Logging",
+      "Args": {
+        "Prefix": "[CLIENT] "
+      }
+    }
+  ]
+}

@@ -41,7 +41,7 @@ func (swapMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 
 // Swap returns a check that verifies the system's swap memory usage percentage.
 func Swap(warnPercent, failPercent float64) chkr.Check {
-	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
+	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
 		v, err := mem.SwapMemoryWithContext(ctx)
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Failed to get swap stats: %v", err)

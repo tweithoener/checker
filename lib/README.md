@@ -34,7 +34,7 @@ The `lib` package provides a robust collection of built-in **Checks** and **Noti
 
 * **`Logging`**: A simple notifier that outputs check results to the standard Go log, prepended with a custom prefix.
 * **`Pushover`**: Sends real-time push notifications to your mobile devices using the Pushover service. It routes different states (Fail, Warn, OK) with varying priorities and notification sounds.
-* **`Less`**: A wrapper notifier that rate-limits notifications from an inner notifier. It prevents alert fatigue by suppressing repeated alerts for the same state, only notifying on state changes or after a prolonged period (e.g., hourly).
+* **`Less`**: A wrapper notifier that rate-limits notifications from an inner notifier. It prevents alert fatigue by suppressing repeated alerts for the same state, only notifying on state changes or after a prolonged period (hourly).
 
 ## Usage Example (Go)
 

@@ -8,7 +8,7 @@ import (
 
 func init() {
 	if err := chkr.AddCheckMaker(
-		pingMkr, httpMkr, proxyMkr, dnsMkr, failMkr, peerMkr, cmdMkr, sshMkr,
+		pingMkr, httpMkr, proxyMkr, dnsMkr, failMkr, cmdMkr, sshMkr,
 		memMkr, cpuMkr, diskMkr, uptimeMkr, loadMkr, swapMkr, procExistsMkr, sysProcsMkr,
 	); err != nil {
 		panic(fmt.Sprintf("configuration error: %v", err))

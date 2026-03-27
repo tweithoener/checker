@@ -46,7 +46,7 @@ func (pingMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 
 // Ping returns a check that verifies connectivity via ICMP echo requests.
 func Ping(address string, warnMillis, failMillis int) chkr.Check {
-	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
+	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
 		dest, err := net.ResolveIPAddr("ip4", address)
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Failed to resolve address: %v", err)

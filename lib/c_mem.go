@@ -41,7 +41,7 @@ func (memMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 
 // Mem returns a check that verifies the system's virtual memory usage percentage.
 func Mem(warnPercent, failPercent float64) chkr.Check {
-	return func(ctx context.Context, h chkr.History) (chkr.State, string) {
+	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
 		v, err := mem.VirtualMemoryWithContext(ctx)
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Failed to get memory stats: %v", err)

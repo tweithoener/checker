@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	configPath := flag.String("config", "server.json", "path to configuration file (e.g. server.json or client.json)")
+	configPath := flag.String("config", "one.json", "path to configuration file (e.g. one.json or another.json)")
 	flag.Parse()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
