@@ -42,10 +42,14 @@ func (dnsMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 	return Dns(args.Dns, args.Hostname, args.Address), nil
 }
 
+var dnsLookupHost = func(ctx context.Context, r *net.Resolver, hostname string) ([]string, error) {
+	return r.LookupHost(ctx, hostname)
+}
+
 // Dns returns a check that verifies the resolution of a hostname to a specific address using a given DNS server.
 func Dns(dns, hostname, address string) chkr.Check {
 	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
-		r := net.Resolver{
+		r := &net.Resolver{
 			PreferGo: true,
 			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
 				d := net.Dialer{
@@ -54,9 +58,9 @@ func Dns(dns, hostname, address string) chkr.Check {
 				return d.DialContext(ctx, network, dns+":53")
 			},
 		}
-		ads, err := r.LookupHost(ctx, hostname)
+		ads, err := dnsLookupHost(ctx, r, hostname)
 		if err != nil {
-			return chkr.Fail, fmt.Sprintf("Host lokup failed: %v", err)
+			return chkr.Fail, fmt.Sprintf("Host lookup failed: %v", err)
 		}
 		for _, ad := range ads {
 			if ad == address {

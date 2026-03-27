@@ -46,16 +46,18 @@ func defaultAnalyzer(exitCode int, output string) (chkr.State, string) {
 	return chkr.Fail, fmt.Sprintf("exit code %d (%s)", exitCode, output)
 }
 
+var execCommandContext = exec.CommandContext
+
 // Cmd returns a check that executes the given command and analyzes the results using the given analyze function.
 // If analyze is nil a default analyzer function is used. This default function only considers the exit code of the
 // called command (non zero exit code results in a failed check).
 // Note: The default analyzer is also used when configuring this check using a json config file with checker.ReadConfig.
 func Cmd(analyze func(exitCode int, output string) (chkr.State, string), name string, args ...string) chkr.Check {
 	return func(ctx context.Context, cs chkr.CheckState) (s chkr.State, message string) {
-		if analyze != nil {
+		if analyze == nil {
 			analyze = defaultAnalyzer
 		}
-		cmd := exec.CommandContext(ctx, name, args...)
+		cmd := execCommandContext(ctx, name, args...)
 		outbs, err := cmd.CombinedOutput()
 		out := string(outbs)
 		out = strings.TrimSpace(out)

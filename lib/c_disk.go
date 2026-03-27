@@ -40,13 +40,15 @@ func (diskMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 	return Disk(args.Path, args.WarnPercent, args.FailPercent), nil
 }
 
+var getDiskUsage = disk.UsageWithContext
+
 // Disk returns a check that verifies the disk usage percentage for a specific path.
 func Disk(path string, warnPercent, failPercent float64) chkr.Check {
 	if path == "" {
 		path = "/"
 	}
 	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
-		u, err := disk.UsageWithContext(ctx, path)
+		u, err := getDiskUsage(ctx, path)
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Failed to get disk stats for %s: %v", path, err)
 		}

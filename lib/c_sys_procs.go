@@ -39,10 +39,12 @@ func (sysProcsMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 	return SysProcs(args.WarnCount, args.FailCount), nil
 }
 
+var getPids = process.PidsWithContext
+
 // SysProcs returns a check that verifies the total number of running processes on the system.
 func SysProcs(warnCount, failCount int) chkr.Check {
 	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
-		pids, err := process.PidsWithContext(ctx)
+		pids, err := getPids(ctx)
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Failed to list pids: %v", err)
 		}

@@ -39,10 +39,12 @@ func (loadMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 	return Load(args.WarnLoad5, args.FailLoad5), nil
 }
 
+var getLoadAvg = load.AvgWithContext
+
 // Load returns a check that verifies the 5-minute system load average.
 func Load(warnLoad5, failLoad5 float64) chkr.Check {
 	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
-		avg, err := load.AvgWithContext(ctx)
+		avg, err := getLoadAvg(ctx)
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Failed to get load average: %v", err)
 		}

@@ -42,6 +42,10 @@ func (proxyMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 	return Proxy(args.Method, args.Request, args.Proxy, args.Expected), nil
 }
 
+var proxyDoRequest = func(cl *http.Client, req *http.Request) (*http.Response, error) {
+	return cl.Do(req)
+}
+
 // Proxy returns a check that performs an HTTP request through a specified proxy.
 func Proxy(method, request, proxy string, expected int) chkr.Check {
 	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
@@ -54,8 +58,8 @@ func Proxy(method, request, proxy string, expected int) chkr.Check {
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Failed to parse proxy URL: %v", err)
 		}
-		cl := http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)}}
-		resp, err := cl.Do(req)
+		cl := &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)}}
+		resp, err := proxyDoRequest(cl, req)
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Request failed: %v", err)
 		}

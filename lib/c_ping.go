@@ -44,97 +44,105 @@ func (pingMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 	return Ping(args.Address, args.WarnMillis, args.FailMillis), nil
 }
 
+var runPing = func(ctx context.Context, address string, timeout time.Duration) (time.Duration, error) {
+	dest, err := net.ResolveIPAddr("ip4", address)
+	if err != nil {
+		return 0, fmt.Errorf("failed to resolve address: %v", err)
+	}
+
+	c, err := icmp.ListenPacket("udp4", "0.0.0.0")
+	if err != nil {
+		c, err = icmp.ListenPacket("ip4:icmp", "0.0.0.0")
+		if err != nil {
+			return 0, fmt.Errorf("failed to listen for ICMP: %v (Note: Ping might require root privileges)", err)
+		}
+	}
+	defer c.Close()
+
+	id := os.Getpid() & 0xffff
+	isUdp := c.LocalAddr().Network() == "udp" || c.LocalAddr().Network() == "udp4"
+	if isUdp {
+		if udpAddr, ok := c.LocalAddr().(*net.UDPAddr); ok {
+			id = udpAddr.Port
+		}
+	}
+
+	msg := icmp.Message{
+		Type: ipv4.ICMPTypeEcho,
+		Code: 0,
+		Body: &icmp.Echo{
+			ID:   id,
+			Seq:  1,
+			Data: []byte("GOMOD-CHECKER-PING"),
+		},
+	}
+
+	b, err := msg.Marshal(nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to marshal ICMP message: %v", err)
+	}
+
+	start := time.Now()
+	deadline := start.Add(timeout)
+	if d, ok := ctx.Deadline(); ok && d.Before(deadline) {
+		deadline = d
+	}
+	c.SetDeadline(deadline)
+
+	var target net.Addr = dest // Default to *net.IPAddr (for Raw Sockets)
+	if isUdp {
+		target = &net.UDPAddr{IP: dest.IP}
+	}
+
+	if _, err := c.WriteTo(b, target); err != nil {
+		return 0, fmt.Errorf("failed to send ICMP: %v", err)
+	}
+
+	reply := make([]byte, 1500)
+	for {
+		n, _, err := c.ReadFrom(reply)
+		if err != nil {
+			return 0, err
+		}
+
+		duration := time.Since(start)
+		rm, err := icmp.ParseMessage(1, reply[:n])
+		if err != nil {
+			continue
+		}
+
+		pkt, ok := rm.Body.(*icmp.Echo)
+		if !ok {
+			continue
+		}
+		if pkt.ID != id {
+			continue // Not our Ping
+		}
+		return duration, nil
+	}
+}
+
 // Ping returns a check that verifies connectivity via ICMP echo requests.
 func Ping(address string, warnMillis, failMillis int) chkr.Check {
 	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
-		dest, err := net.ResolveIPAddr("ip4", address)
-		if err != nil {
-			return chkr.Fail, fmt.Sprintf("Failed to resolve address: %v", err)
-		}
-
-		c, err := icmp.ListenPacket("udp4", "0.0.0.0")
-		if err != nil {
-			c, err = icmp.ListenPacket("ip4:icmp", "0.0.0.0")
-			if err != nil {
-				return chkr.Fail, fmt.Sprintf("Failed to listen for ICMP: %v (Note: Ping might require root privileges)", err)
-			}
-		}
-		defer c.Close()
-
-		id := os.Getpid() & 0xffff
-		isUdp := c.LocalAddr().Network() == "udp" || c.LocalAddr().Network() == "udp4"
-		if isUdp {
-			if udpAddr, ok := c.LocalAddr().(*net.UDPAddr); ok {
-				id = udpAddr.Port
-			}
-		}
-
-		msg := icmp.Message{
-			Type: ipv4.ICMPTypeEcho,
-			Code: 0,
-			Body: &icmp.Echo{
-				ID:   id,
-				Seq:  1,
-				Data: []byte("GOMOD-CHECKER-PING"),
-			},
-		}
-
-		b, err := msg.Marshal(nil)
-		if err != nil {
-			return chkr.Fail, fmt.Sprintf("Failed to marshal ICMP message: %v", err)
-		}
-
-		start := time.Now()
 		failDuration := time.Duration(failMillis) * time.Millisecond
 		warnDuration := time.Duration(warnMillis) * time.Millisecond
 
-		deadline := start.Add(failDuration)
-		if d, ok := ctx.Deadline(); ok && d.Before(deadline) {
-			deadline = d
-		}
-		c.SetDeadline(deadline)
-
-		var target net.Addr = dest // Standardmäßig *net.IPAddr (für Raw Sockets)
-		if isUdp {
-			target = &net.UDPAddr{IP: dest.IP}
+		duration, err := runPing(ctx, address, failDuration)
+		if err != nil {
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				return chkr.Fail, fmt.Sprintf("Ping timeout after %dms", failMillis)
+			}
+			return chkr.Fail, fmt.Sprintf("Ping failed: %v", err)
 		}
 
-		if _, err := c.WriteTo(b, target); err != nil {
-			return chkr.Fail, fmt.Sprintf("Failed to send ICMP: %v", err)
+		msg := fmt.Sprintf("Ping latency: %v", duration.Truncate(time.Microsecond))
+		if duration > failDuration {
+			return chkr.Fail, msg
 		}
-
-		reply := make([]byte, 1500)
-		for {
-			n, _, err := c.ReadFrom(reply)
-			if err != nil {
-				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-					return chkr.Fail, fmt.Sprintf("Ping timeout after %dms", failMillis)
-				}
-				return chkr.Fail, fmt.Sprintf("Failed to receive ICMP reply: %v", err)
-			}
-
-			duration := time.Since(start)
-			rm, err := icmp.ParseMessage(1, reply[:n])
-			if err != nil {
-				continue
-			}
-
-			pkt, ok := rm.Body.(*icmp.Echo)
-			if !ok {
-				continue
-			}
-			if pkt.ID != id {
-				continue // Not our Ping
-			}
-
-			msg := fmt.Sprintf("Ping latency: %v", duration.Truncate(time.Microsecond))
-			if duration > failDuration {
-				return chkr.Fail, msg
-			}
-			if duration > warnDuration {
-				return chkr.Warn, msg
-			}
-			return chkr.OK, msg
+		if duration > warnDuration {
+			return chkr.Warn, msg
 		}
+		return chkr.OK, msg
 	}
 }

@@ -38,18 +38,31 @@ func (procExistsMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 	return ProcExists(args.Name), nil
 }
 
+var getProcessNames = func(ctx context.Context) ([]string, error) {
+	procs, err := process.ProcessesWithContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	for _, p := range procs {
+		if n, err := p.NameWithContext(ctx); err == nil {
+			names = append(names, n)
+		}
+	}
+	return names, nil
+}
+
 // ProcExists returns a check that verifies if at least one process with the exact given name is running.
 func ProcExists(name string) chkr.Check {
 	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
-		procs, err := process.ProcessesWithContext(ctx)
+		names, err := getProcessNames(ctx)
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Failed to list processes: %v", err)
 		}
 
 		count := 0
-		for _, p := range procs {
-			n, err := p.NameWithContext(ctx)
-			if err == nil && n == name {
+		for _, n := range names {
+			if n == name {
 				count++
 			}
 		}

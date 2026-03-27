@@ -39,12 +39,14 @@ func (cpuMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 	return Cpu(args.WarnPercent, args.FailPercent), nil
 }
 
+var getCpuPercent = cpu.PercentWithContext
+
 // Cpu returns a check that verifies the system's total CPU usage percentage.
 func Cpu(warnPercent, failPercent float64) chkr.Check {
 	return func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
 		// Interval 0 gets the CPU usage since the last call.
 		// Since checks are executed periodically, this works well without blocking.
-		percentages, err := cpu.PercentWithContext(ctx, 0, false)
+		percentages, err := getCpuPercent(ctx, 0, false)
 		if err != nil || len(percentages) == 0 {
 			return chkr.Fail, fmt.Sprintf("Failed to get CPU stats: %v", err)
 		}

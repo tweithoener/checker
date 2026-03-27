@@ -41,6 +41,10 @@ func (pushoverMaker) FromConfig(c chkr.NotifierConfig) (chkr.Notifier, error) {
 	return Pushover(args.Prefix, args.App, args.Recipient), nil
 }
 
+var sendPushoverMessage = func(app *po.Pushover, message *po.Message, recipient *po.Recipient) (*po.Response, error) {
+	return app.SendMessage(message, recipient)
+}
+
 // Pushover returns a notifier that sends messages to the Pushover service.
 func Pushover(prefix, app, recipient string) chkr.Notifier {
 	puApp := po.New(app)
@@ -60,8 +64,8 @@ func Pushover(prefix, app, recipient string) chkr.Notifier {
 			message.Sound = po.SoundIncoming
 		}
 
-		if _, err := puApp.SendMessage(message, puRecipient); err != nil {
-			log.Printf("Can't send pushover notification: %c", err)
+		if _, err := sendPushoverMessage(puApp, message, puRecipient); err != nil {
+			log.Printf("Can't send pushover notification: %v", err)
 		}
 	}
 }
