@@ -142,16 +142,16 @@ func (chkr *Checker) AddNotifier(n Notifier) error {
 // Start begins the periodic execution of registered checks.
 func (chkr *Checker) Start() error {
 	chkr.mu.Lock()
+	defer chkr.mu.Unlock()
 	if chkr.running {
 		return errors.New("checker is already running")
 	}
-	chkr.running = true
-	chkr.mu.Unlock()
-	chkr.startHttpServer()
-
 	if len(chkr.checks) == 0 {
 		return errors.New("no checks, no peers")
 	}
+	chkr.running = true
+	chkr.startHttpServer()
+
 	chkr.wg.Add(1)
 	go func() {
 		defer chkr.wg.Done()
