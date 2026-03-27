@@ -62,6 +62,7 @@ func TestNotifierMakers(t *testing.T) {
 		{logginMkr, `{"Prefix": "LOG: "}`},
 		{debugMkr, `{"Prefix": "DEBUG: "}`},
 		{pushoverMkr, `{"Prefix": "ERR: ", "App": "app-token", "Recipient": "user-token"}`},
+		{emailMkr, `{"SmtpServer": "smtp.example.com:587", "User": "user", "Password": "pwd", "To": ["admin@example.com"], "Template": "Body"}`},
 		{lessMkr, `{"Notifier": {"Maker": "Logging", "Args": {"Prefix": "LOG: "}}}`},
 	}
 
