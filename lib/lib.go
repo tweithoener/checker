@@ -14,7 +14,7 @@ func init() {
 		panic(fmt.Sprintf("configuration error: %v", err))
 	}
 	if err := chkr.AddNotifierMaker(
-		pushoverMkr, logginMkr, lessMkr,
+		pushoverMkr, logginMkr, lessMkr, debugMkr,
 	); err != nil {
 		panic(fmt.Sprintf("configuration error: %v", err))
 	}

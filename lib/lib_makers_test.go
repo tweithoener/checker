@@ -60,6 +60,7 @@ func TestNotifierMakers(t *testing.T) {
 		json  string
 	}{
 		{logginMkr, `{"Prefix": "LOG: "}`},
+		{debugMkr, `{"Prefix": "DEBUG: "}`},
 		{pushoverMkr, `{"Prefix": "ERR: ", "App": "app-token", "Recipient": "user-token"}`},
 		{lessMkr, `{"Notifier": {"Maker": "Logging", "Args": {"Prefix": "LOG: "}}}`},
 	}
