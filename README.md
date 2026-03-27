@@ -1,6 +1,6 @@
 # Checker -- System Monitoring For Go Programmers
 
-A very simple, reduced, and lightweight replacement for complex monitoring systems like Nagios. 
+A very simple, reduced, and lightweight replacement for complex monitoring systems like Nagios.
 
 ## Motivation
 
@@ -9,16 +9,16 @@ Monitoring systems often come with a steep learning curve, requiring you to unde
 **Checker** takes a different approach:
 - **No new syntax to learn:** It can be configured entirely in Go.
 - **IDE Support:** Because it's just Go code, you get full autocompletion, type safety, and debugging support right in your IDE.
-- **Keep it simple:** There are only **Checks** and **Notifiers**. No complex hierarchies. You define what to check and who to notify when the state changes. 
-- **Standard Library** of commonly used checks - ready to be included into your Checker monitoring project. See the [Standard Library Documentation (`lib/README.md`)](lib/README.md) for a full list of available Checks (like HTTP, Ping, CPU, Memory) and Notifiers.
-- **JSON Configuration (Optional):** If you prefer, you can easily load your setup from a simple JSON file using the provided `lib` components. 
-- **Peer-to-Peer Monitoring:** Every Checker instance can act as a server. Instances can monitor each other, providing a decentralized and resilient monitoring network with summary reporting.
+- **Keep it simple:** There are only **Checks** and **Notifiers**. No complex hierarchies. You define what to check and who to notify when the state changes.
+- **Standard Library:** A rich collection of commonly used checks (HTTP, Ping, CPU, Memory, SSH, etc.) is ready to be included. See the [Standard Library Documentation (`lib/README.md`)](lib/README.md) for a full list of available components.
+- **JSON Configuration (Optional):** If you prefer, you can easily load your entire setup from a simple JSON file using the provided `lib` components.
+- **Peer-to-Peer Monitoring:** Every Checker instance can act as a server. Instances can monitor each other, providing a decentralized and resilient monitoring network where peers exchange their global state trees.
 
 ## Examples
 
 ### 1. A Simple Custom Check in Go
 
-You can write your checks directly in Go. A check is simply a function that takes a context and history, and returns a state and a message.
+You can write your checks directly in Go. A check is simply a function that takes a context and the current `CheckState`, and returns a new state and a message.
 
 ```go
 package main
@@ -36,7 +36,7 @@ func main() {
 	c := chkr.New()
 
 	// 2. Add a custom check
-	c.AddCheck("My Custom Check", func(ctx context.Context, h chkr.History) (chkr.State, string) {
+	c.AddCheck("My Custom Check", func(ctx context.Context, cs chkr.CheckState) (chkr.State, string) {
 		// Your custom logic here...
 		if time.Now().Second()%2 == 0 {
 			return chkr.OK, "Everything is fine"
@@ -45,8 +45,8 @@ func main() {
 	})
 
 	// 3. Add a simple notifier to print to the console
-	c.AddNotifier(func(ctx context.Context, name string, h chkr.History) {
-		fmt.Printf("[%s] Check '%s' state changed to: %s (%s)\n", time.Now().Format(time.RFC3339), name, h.State(), h.Message())
+	c.AddNotifier(func(ctx context.Context, name string, cs chkr.CheckState) {
+		fmt.Printf("[%s] %s is now: %s (%s)\n", time.Now().Format(time.TimeOnly), name, cs.State, cs.Message)
 	})
 
 	// 4. Set the check interval and start
@@ -64,24 +64,38 @@ func main() {
 ```
 
 ### 2. Using the Standard Library from Go
-The `checker/lib` package provides ready-to-use checks (like Ping, HTTP, DNS, etc.) and notifiers (like Logging, Pushover, Rate-Limiting).
-You can easily include these into your checker.
+
+The `checker/lib` package provides ready-to-use checks (like Ping, HTTP, DNS, System Metrics) and notifiers (like Logging, Pushover, Rate-Limiting).
 
 ```go
-	...
+package main
+
+import (
+	"context"
+	"net/http"
+	"time"
+
+	chkr "github.com/tweithoener/checker"
+	"github.com/tweithoener/checker/lib"
+)
+
+func main() {
+	c := chkr.New()
 	
-	// 2. Add checks and notifier from the standard library
+	// Add checks and a notifier from the standard library
 	c.AddCheck("Ping Webserver", lib.Ping("example.com", 50, 300))
-	c.AddCheck("Check My Website ", lib.Http("GET", "https://example.com/", http.StatusOK))
+	c.AddCheck("Check My Website", lib.Http("GET", "https://example.com/", http.StatusOK))
 	c.AddNotifier(lib.Logging("ALERT: "))
 
-	...
+	c.SetInterval(5 * time.Second)
+	c.Start()
+	// ... (Shutdown logic)
+}
 ```
-
 
 ### 3. Using the Standard Library and JSON Configuration
 
-The  checks from the Standard Library can also be configured easily via a JSON file.
+You can configure the exact same setup using a JSON file. This is perfect for deploying Checker as a standalone binary without recompiling.
 
 **`config.json`**
 ```json
@@ -119,18 +133,15 @@ The  checks from the Standard Library can also be configured easily via a JSON f
 package main
 
 import (
-	"context"
 	"log"
 	"os"
-	"time"
 
 	chkr "github.com/tweithoener/checker"
-	// Import the lib package to register the standard checks and notifiers
+	// Blank import registers all standard checks and notifiers
 	_ "github.com/tweithoener/checker/lib"
 )
 
 func main() {
-	// Open the configuration file
 	f, err := os.Open("config.json")
 	if err != nil {
 		log.Fatalf("can't open config file: %v", err)
@@ -138,21 +149,12 @@ func main() {
 	defer f.Close()
 
 	c := chkr.New()
-	
-	// Load checks and notifiers from the JSON config
 	if err := c.ReadConfig(f); err != nil {
-		log.Fatalf("can't configure checker from config file: %v", err)
+		log.Fatalf("config error: %v", err)
 	}
 
-	c.SetInterval(5 * time.Second)
 	c.Start()
-
-	// Keep running
-	time.Sleep(30 * time.Second)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	c.Shutdown(ctx)
+	// ... (Wait and Shutdown logic)
 }
 ```
 
@@ -160,30 +162,38 @@ func main() {
 
 Enable the built-in HTTP server on one instance and monitor it from another. This allows you to build a resilient monitoring grid where instances "watch the watchers".
 
-**Remote Instance (`config.json`):**
+**Node A (Server):**
 ```json
 {
+  "Interval": 10,
   "Server": {
     "Enabled": true,
     "Listen": ":8080"
   },
-  "Checks": [ ... ]
-}
-```
-
-**Local Instance Monitoring the Remote (`config.json`):**
-```json
-{
   "Checks": [
     {
-      "Maker": "Peer",
-      "Name": "Remote Office Checker",
-      "Args": {
-        "Address": "http://192.168.1.50:8080/"
-      }
+      "Maker": "Cpu",
+      "Name": "CPU Usage",
+      "Args": { "WarnPercent": 80, "FailPercent": 90 }
     }
   ]
 }
 ```
 
-When the remote instance reports a non-OK state, the `Peer` check automatically summarizes the failure, showing the number of affected checks and the most recent error.
+**Node B (Monitoring Node A):**
+```json
+{
+  "Interval": 10,
+  "Peers": [
+    "192.168.1.50:8080"
+  ],
+  "Notifiers": [
+    {
+      "Maker": "Logging",
+      "Args": { "Prefix": "GLOBAL-STATE: " }
+    }
+  ]
+}
+```
+
+When Node A reports a non-OK state, Node B automatically pulls that state, summarizes the failure, and triggers its own notifiers. By visiting `http://192.168.1.50:8080/` in your browser, you also get a neat HTML dashboard of the current health!

@@ -95,9 +95,9 @@ func (chkr *Checker) AddCheck(name string, chk Check) error {
 }
 
 // AddPeer adds a peer for p2p monitoring. Address must consist of hostname or ip address plus port
-// (e.g. "example.com:8080")
+// (e.g. "example.com:8080").
 // Note: Only peers that are added using this method (or the respective JSON config)
-// will be probed actively. However, you might see more peers in the checker web page,
+// will be probed actively. However, you might see more peers in the checker web page.
 // This happens when direct peers have more peers. Peer states are passed on throughout the
 // monitoring network. But only state changes in direct peers will result in notifications.
 func (chkr *Checker) AddPeer(address string) error {
@@ -246,12 +246,19 @@ func (chkr *Checker) Shutdown(ctx context.Context) error {
 }
 
 // SetInterval updates the duration between check executions.
+// It determines how often the entire suite of checks is iterated over.
 func (chkr *Checker) SetInterval(interval time.Duration) {
 	chkr.interval = interval
 }
 
-// Sets the name of this checker instance. If this method is not used or called with an empty string
-// the system's hostname is used.
+// Interval returns the current interval duration of the Checker.
+func (chkr *Checker) Interval() time.Duration {
+	return chkr.interval
+}
+
+// SetName sets the name of this checker instance. 
+// If this method is not used or called with an empty string, 
+// the system's hostname will be used automatically.
 func (chkr *Checker) SetName(name string) {
 	if name == "" {
 		var err error
@@ -262,6 +269,32 @@ func (chkr *Checker) SetName(name string) {
 		}
 	}
 	chkr.name = name
+}
+
+// Name returns the configured name of the checker instance.
+func (chkr *Checker) Name() string {
+	return chkr.name
+}
+
+// Checks returns a slice of names for all registered checks.
+// Peer checks are not included in this list.
+func (chkr *Checker) Checks() []string {
+	chkr.mu.RLock()
+	defer chkr.mu.RUnlock()
+	var res []string
+	for _, m := range chkr.checks {
+		if !m.isPeer {
+			res = append(res, m.Name)
+		}
+	}
+	return res
+}
+
+// Notifiers returns the count of active notifiers registered in the checker.
+func (chkr *Checker) Notifiers() int {
+	chkr.mu.RLock()
+	defer chkr.mu.RUnlock()
+	return len(chkr.notifiers)
 }
 
 func (chkr *Checker) snapshot() CheckerState {

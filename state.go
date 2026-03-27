@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// PeerState is used to transfer json encoded state information between
+// PeerState is used to transfer JSON-encoded state information between
 // checker instances using the checker server.
 type PeerState struct {
 	Name    string                `json:"name"`
@@ -25,14 +25,15 @@ func (ps PeerState) deepCopy() PeerState {
 	return nps
 }
 
-// CheckerState is used to transfer json encoded state information between
-// checker instances using the checker server.
+// CheckerState is used to transfer JSON-encoded state information between
+// checker instances using the checker server. It includes the state of the
+// local node as well as the state of all its peers.
 type CheckerState struct {
 	PeerState
 	PeerStates map[string]PeerState `json:"peerStates"`
 }
 
-// CheckState represents the state and historical data of a single check
+// CheckState represents the current state and historical data of a single check.
 type CheckState struct {
 	Name    string              `json:"name"`
 	State   State               `json:"state"`

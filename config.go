@@ -30,7 +30,7 @@ type NotifierConfig struct {
 	Args  any
 }
 
-// ServerConfig definies the configuration for the server for peer-to-peer monitoring
+// ServerConfig defines the configuration for the server for peer-to-peer monitoring.
 type ServerConfig struct {
 	Enabled bool
 	Listen  string

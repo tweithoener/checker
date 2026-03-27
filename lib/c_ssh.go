@@ -7,6 +7,7 @@ import (
 	chkr "github.com/tweithoener/checker"
 )
 
+// SshArgs defines the arguments for an SSH command execution check.
 type SshArgs struct {
 	Host    string
 	User    string

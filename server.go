@@ -18,7 +18,9 @@ func (chkr *Checker) EnableServer(listen string) {
 	chkr.serverConfig.Listen = listen
 }
 
-// ServeHTTP provides the current state of the checker as a JSON response.
+// ServeHTTP provides the current state of the checker as a JSON or HTML response,
+// depending on the client's Accept header. It also accepts POST requests containing
+// peer states to update the local instance's knowledge of the network.
 func (chkr *Checker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	acceptsJson := false
 	wantsHTML := false

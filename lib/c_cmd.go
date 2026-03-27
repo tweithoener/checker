@@ -10,6 +10,7 @@ import (
 	chkr "github.com/tweithoener/checker"
 )
 
+// CmdArgs defines the arguments for a command execution check.
 type CmdArgs struct {
 	Command string
 	Args    []string
