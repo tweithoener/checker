@@ -251,13 +251,8 @@ func (chkr *Checker) SetInterval(interval time.Duration) {
 	chkr.interval = interval
 }
 
-// Interval returns the current interval duration of the Checker.
-func (chkr *Checker) Interval() time.Duration {
-	return chkr.interval
-}
-
-// SetName sets the name of this checker instance. 
-// If this method is not used or called with an empty string, 
+// SetName sets the name of this checker instance.
+// If this method is not used or called with an empty string,
 // the system's hostname will be used automatically.
 func (chkr *Checker) SetName(name string) {
 	if name == "" {
@@ -274,27 +269,6 @@ func (chkr *Checker) SetName(name string) {
 // Name returns the configured name of the checker instance.
 func (chkr *Checker) Name() string {
 	return chkr.name
-}
-
-// Checks returns a slice of names for all registered checks.
-// Peer checks are not included in this list.
-func (chkr *Checker) Checks() []string {
-	chkr.mu.RLock()
-	defer chkr.mu.RUnlock()
-	var res []string
-	for _, m := range chkr.checks {
-		if !m.isPeer {
-			res = append(res, m.Name)
-		}
-	}
-	return res
-}
-
-// Notifiers returns the count of active notifiers registered in the checker.
-func (chkr *Checker) Notifiers() int {
-	chkr.mu.RLock()
-	defer chkr.mu.RUnlock()
-	return len(chkr.notifiers)
 }
 
 func (chkr *Checker) snapshot() CheckerState {
