@@ -5,8 +5,8 @@ import (
 	"context"
 	"io"
 	"os"
-	"strings"
 	"testing"
+	"time"
 
 	chkr "github.com/tweithoener/checker"
 )
@@ -18,7 +18,14 @@ func TestDebug(t *testing.T) {
 	os.Stdout = w
 
 	not := Debug("DEBUG-")
-	cs := chkr.CheckState{Name: "testcheck", State: chkr.OK, Message: "all good"}
+	since := time.Date(2023, 1, 1, 10, 0, 0, 0, time.UTC)
+	cs := chkr.CheckState{
+		Name:    "testcheck",
+		State:   chkr.OK,
+		Message: "all good",
+		Streak:  1,
+		Since:   since,
+	}
 	not(context.Background(), "testcheck", cs)
 
 	// Close writer and restore stdout
@@ -29,7 +36,9 @@ func TestDebug(t *testing.T) {
 	io.Copy(&buf, r)
 	output := buf.String()
 
-	if !strings.Contains(output, "DEBUG-OK: testcheck: all good") {
-		t.Errorf("Debug output mismatch, got: %s", output)
+	// The timestamp in the output should be replaced by "2001-01-01 01:01:01"
+	expected := "DEBUG-OK: testcheck: all good (1x since 2001-01-01 01:01:01)\n"
+	if output != expected {
+		t.Errorf("Debug output mismatch\ngot:  %q\nwant: %q", output, expected)
 	}
 }
