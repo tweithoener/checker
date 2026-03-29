@@ -189,7 +189,10 @@ func (chkr *Checker) runCheck(meta *meta) {
 		defer meta.mu.Unlock()
 
 		now := time.Now()
-		s, msg := meta.call(chkr.ctx, meta.CheckState)
+		
+		checkCtx, cancel := context.WithTimeout(chkr.ctx, 30*time.Second)
+		defer cancel()
+		s, msg := meta.call(checkCtx, meta.CheckState)
 
 		if s == Skipped {
 			return
@@ -219,15 +222,16 @@ func (chkr *Checker) runCheck(meta *meta) {
 
 // Shutdown gracefully stops the Checker, bounded by the provided context.
 func (chkr *Checker) Shutdown(ctx context.Context) error {
+	chkr.mu.Lock()
 	if !chkr.running {
+		chkr.mu.Unlock()
 		return errors.New("checker is not running")
 	}
-	defer func() {
-		chkr.running = false
-	}()
+	chkr.running = false
+	close(chkr.quit)
+	chkr.mu.Unlock()
 
 	chkr.stopHttpServer(ctx)
-	close(chkr.quit)
 
 	allDone := make(chan struct{})
 	go func() {
