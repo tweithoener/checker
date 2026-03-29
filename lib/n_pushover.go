@@ -49,9 +49,9 @@ var sendPushoverMessage = func(app *po.Pushover, message *po.Message, recipient 
 func Pushover(prefix, app, recipient string) chkr.Notifier {
 	puApp := po.New(app)
 	puRecipient := po.NewRecipient(recipient)
-	return func(ctx context.Context, name string, cs chkr.CheckState) {
+	return func(ctx context.Context, cs chkr.CheckState) {
 		message := po.NewMessage(fmt.Sprintf("%s%s", prefix, cs))
-		message.Title = fmt.Sprintf("%s %s", cs.State, name)
+		message.Title = fmt.Sprintf("%s %s", cs.State, cs.Name)
 		switch cs.State {
 		case chkr.Fail:
 			message.Priority = po.PriorityHigh

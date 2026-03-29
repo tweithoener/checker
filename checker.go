@@ -15,7 +15,7 @@ import (
 type Check func(ctx context.Context, cs CheckState) (s State, message string)
 
 // Notifier defines the signature for a notification handler.
-type Notifier func(ctx context.Context, name string, cs CheckState)
+type Notifier func(ctx context.Context, cs CheckState)
 
 // Checker manages checks and notifiers, executing them at a configured interval.
 type Checker struct {
@@ -210,7 +210,7 @@ func (chkr *Checker) runCheck(meta *meta) {
 				chkr.wg.Add(1)
 				go func(notifier Notifier, cs CheckState) {
 					defer chkr.wg.Done()
-					notifier(chkr.ctx, meta.Name, cs)
+					notifier(chkr.ctx, cs)
 				}(n, snap)
 			}
 		}

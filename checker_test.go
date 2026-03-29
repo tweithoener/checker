@@ -58,7 +58,7 @@ func TestChecker_AddCheck(t *testing.T) {
 
 func TestChecker_AddNotifier(t *testing.T) {
 	c := New()
-	mockNotifier := func(ctx context.Context, name string, cs CheckState) {}
+	mockNotifier := func(ctx context.Context, cs CheckState) {}
 
 	err := c.AddNotifier(mockNotifier)
 	if err != nil {
@@ -141,7 +141,7 @@ func TestChecker_RunCheck(t *testing.T) {
 	}
 
 	var notifierCalled int32
-	mockNotifier := func(ctx context.Context, name string, cs CheckState) {
+	mockNotifier := func(ctx context.Context, cs CheckState) {
 		atomic.AddInt32(&notifierCalled, 1)
 	}
 

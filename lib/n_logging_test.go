@@ -18,7 +18,7 @@ func TestLogging(t *testing.T) {
 
 	not := Logging("TEST-")
 	cs := chkr.CheckState{Name: "mycheck", State: chkr.OK, Message: "Everything is OK"}
-	not(context.Background(), "mycheck", cs)
+	not(context.Background(), cs)
 
 	output := buf.String()
 	if !strings.Contains(output, "TEST-OK: mycheck: Everything is OK") {

@@ -45,7 +45,7 @@ func TestEmail(t *testing.T) {
 			checkState: chkr.CheckState{Name: "test-check", State: chkr.Fail, Message: "failed badly"},
 			expectedTo: []string{"admin@example.com"},
 			expectedFrom: "user@" + shortHostname,
-			expectedSubj: "Checker: Failed test-check",
+			expectedSubj: "[Checker] Failed test-check",
 			expectedBody: "Message: failed badly",
 		},
 		{
@@ -62,7 +62,7 @@ func TestEmail(t *testing.T) {
 			checkState: chkr.CheckState{Name: "db-check", State: chkr.Fail},
 			expectedTo: []string{"admin@example.com", "dev@example.com"},
 			expectedFrom: "alerts@example.com",
-			expectedSubj: "Checker: Failed db-check",
+			expectedSubj: "[Checker] Failed db-check",
 			expectedBody: "CRITICAL: db-check is Failed",
 		},
 		{
@@ -75,7 +75,7 @@ func TestEmail(t *testing.T) {
 			checkState: chkr.CheckState{Name: "test-check", State: chkr.Fail},
 			expectedTo: []string{"user@example.com"},
 			expectedFrom: "user@example.com",
-			expectedSubj: "Checker: Failed test-check",
+			expectedSubj: "[Checker] Failed test-check",
 			expectedBody: "Check test-check is in state Failed",
 			mockErr:      context.DeadlineExceeded,
 			expectLogMsg: "Can't send email notification",
@@ -123,7 +123,7 @@ func TestEmail(t *testing.T) {
 			}
 
 			not := Email(tt.smtpServer, tt.user, tt.password, tt.to, tt.opts...)
-			not(context.Background(), tt.checkName, tt.checkState)
+			not(context.Background(), tt.checkState)
 
 			if !called {
 				t.Error("sendEmailMsg was not called")

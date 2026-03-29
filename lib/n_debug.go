@@ -44,7 +44,7 @@ var tsRegex = regexp.MustCompile(`\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}`)
 // It is primarily intended for debugging and development.
 // It replaces any timestamp in the output with '2001-01-01 01:01:01' to make it deterministic for testing.
 func Debug(prefix string) chkr.Notifier {
-	return func(_ context.Context, name string, cs chkr.CheckState) {
+	return func(_ context.Context, cs chkr.CheckState) {
 		out := fmt.Sprintf("%s%s", prefix, cs)
 		out = tsRegex.ReplaceAllString(out, "2001-01-01 01:01:01")
 		fmt.Println(out)

@@ -35,7 +35,7 @@ func (m *mockNotifierMaker) Maker() string {
 }
 
 func (m *mockNotifierMaker) FromConfig(c NotifierConfig) (Notifier, error) {
-	return func(ctx context.Context, name string, cs CheckState) {}, nil
+	return func(ctx context.Context, cs CheckState) {}, nil
 }
 
 func (m *mockNotifierMaker) UnmarshalArgs(j json.RawMessage) (any, error) {

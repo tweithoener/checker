@@ -50,8 +50,8 @@ func main() {
 	})
 
 	// 3. Add a simple console notifier
-	c.AddNotifier(func(ctx context.Context, name string, cs chkr.CheckState) {
-		fmt.Printf("[%s] Check '%s' state changed to: %s (%s)\n", time.Now().Format(time.RFC3339), name, cs.State, cs.Message)
+	c.AddNotifier(func(ctx context.Context, cs chkr.CheckState) {
+		fmt.Printf("[%s] Check '%s' state changed to: %s (%s)\n", time.Now().Format(time.RFC3339), cs.Name, cs.State, cs.Message)
 	})
 
 	// 4. Start the engine

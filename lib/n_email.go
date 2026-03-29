@@ -151,7 +151,7 @@ func Email(smtpServer, user, password string, to []string, opts ...EmailOption) 
 		WithTemplate(defaultEmailTemplate)(options)
 	}
 
-	return func(ctx context.Context, name string, cs chkr.CheckState) {
+	return func(ctx context.Context, cs chkr.CheckState) {
 		if len(to) == 0 {
 			log.Printf("Can't send email: no recipients")
 			return
@@ -172,7 +172,7 @@ func Email(smtpServer, user, password string, to []string, opts ...EmailOption) 
 			log.Printf("Can't set to addresses: %v", err)
 			return
 		}
-		m.Subject(fmt.Sprintf("[Checker] %s %s", cs.State, name))
+		m.Subject(fmt.Sprintf("[Checker] %s %s", cs.State, cs.Name))
 		m.SetBodyString(mail.TypeTextPlain, body.String())
 
 		if err := sendEmailMsg(smtpServer, user, password, m); err != nil {

@@ -73,7 +73,7 @@ func TestPushover(t *testing.T) {
 				Name:  "my-check",
 				State: tt.state,
 			}
-			not(context.Background(), "my-check", cs)
+			not(context.Background(), cs)
 
 			if !called {
 				t.Error("sendPushoverMessage was not called")

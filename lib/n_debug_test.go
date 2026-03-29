@@ -26,7 +26,7 @@ func TestDebug(t *testing.T) {
 		Streak:  1,
 		Since:   since,
 	}
-	not(context.Background(), "testcheck", cs)
+	not(context.Background(), cs)
 
 	// Close writer and restore stdout
 	w.Close()
