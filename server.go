@@ -51,7 +51,6 @@ func (chkr *Checker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					chkr.integratePeerState(ps)
 				}
 			}
-			defer r.Body.Close()
 		}
 
 		w.Header().Set("Content-Type", "application/json")

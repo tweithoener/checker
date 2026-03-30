@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -54,7 +55,10 @@ func Http(method, url string, expected int) chkr.Check {
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Request failed: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() {
+			io.Copy(io.Discard, resp.Body)
+			resp.Body.Close()
+		}()
 
 		if resp.StatusCode != expected {
 			return chkr.Fail, fmt.Sprintf("Unexpected status code: %d (expected %d)", resp.StatusCode, expected)

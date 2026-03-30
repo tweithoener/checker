@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -35,6 +36,7 @@ func (chkr *Checker) peerCheck(address string) Check {
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
+			io.Copy(io.Discard, resp.Body)
 			return Fail, fmt.Sprintf("Unexpected status code: %d", resp.StatusCode)
 		}
 
