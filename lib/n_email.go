@@ -93,7 +93,7 @@ func WithFrom(from string) EmailOption {
 	}
 }
 
-var sendEmailMsg = func(smtpServer string, user string, password string, msg *mail.Msg) error {
+var sendEmailMsg = func(ctx context.Context, smtpServer string, user string, password string, msg *mail.Msg) error {
 	host, portStr, err := net.SplitHostPort(smtpServer)
 	if err != nil {
 		host = smtpServer
@@ -124,7 +124,7 @@ var sendEmailMsg = func(smtpServer string, user string, password string, msg *ma
 	if err != nil {
 		return fmt.Errorf("can't create mail client: %v", err)
 	}
-	return client.DialAndSend(msg)
+	return client.DialAndSendWithContext(ctx, msg)
 }
 
 // Email returns a notifier that sends emails via SMTP.
@@ -175,7 +175,7 @@ func Email(smtpServer, user, password string, to []string, opts ...EmailOption) 
 		m.Subject(fmt.Sprintf("[Checker] %s %s", cs.State, cs.Name))
 		m.SetBodyString(mail.TypeTextPlain, body.String())
 
-		if err := sendEmailMsg(smtpServer, user, password, m); err != nil {
+		if err := sendEmailMsg(ctx, smtpServer, user, password, m); err != nil {
 			log.Printf("Can't send email notification: %v", err)
 		}
 	}

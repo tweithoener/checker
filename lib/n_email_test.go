@@ -36,14 +36,14 @@ func TestEmail(t *testing.T) {
 		expectLogMsg string
 	}{
 		{
-			name:       "Default Template and From",
-			smtpServer: "smtp.example.com:587",
-			user:       "user",
-			password:   "pass",
-			to:         []string{"admin@example.com"},
-			checkName:  "test-check",
-			checkState: chkr.CheckState{Name: "test-check", State: chkr.Fail, Message: "failed badly"},
-			expectedTo: []string{"admin@example.com"},
+			name:         "Default Template and From",
+			smtpServer:   "smtp.example.com:587",
+			user:         "user",
+			password:     "pass",
+			to:           []string{"admin@example.com"},
+			checkName:    "test-check",
+			checkState:   chkr.CheckState{Name: "test-check", State: chkr.Fail, Message: "failed badly"},
+			expectedTo:   []string{"admin@example.com"},
 			expectedFrom: "user@" + shortHostname,
 			expectedSubj: "[Checker] Failed test-check",
 			expectedBody: "Message: failed badly",
@@ -58,22 +58,22 @@ func TestEmail(t *testing.T) {
 				WithFrom("alerts@example.com"),
 				WithTemplate("CRITICAL: {{.Name}} is {{.State}}"),
 			},
-			checkName:  "db-check",
-			checkState: chkr.CheckState{Name: "db-check", State: chkr.Fail},
-			expectedTo: []string{"admin@example.com", "dev@example.com"},
+			checkName:    "db-check",
+			checkState:   chkr.CheckState{Name: "db-check", State: chkr.Fail},
+			expectedTo:   []string{"admin@example.com", "dev@example.com"},
 			expectedFrom: "alerts@example.com",
 			expectedSubj: "[Checker] Failed db-check",
 			expectedBody: "CRITICAL: db-check is Failed",
 		},
 		{
-			name:       "SMTP Error",
-			smtpServer: "smtp.example.com:587",
-			user:       "user@example.com",
-			password:   "pass",
-			to:         []string{"user@example.com"},
-			checkName:  "test-check",
-			checkState: chkr.CheckState{Name: "test-check", State: chkr.Fail},
-			expectedTo: []string{"user@example.com"},
+			name:         "SMTP Error",
+			smtpServer:   "smtp.example.com:587",
+			user:         "user@example.com",
+			password:     "pass",
+			to:           []string{"user@example.com"},
+			checkName:    "test-check",
+			checkState:   chkr.CheckState{Name: "test-check", State: chkr.Fail},
+			expectedTo:   []string{"user@example.com"},
 			expectedFrom: "user@example.com",
 			expectedSubj: "[Checker] Failed test-check",
 			expectedBody: "Check test-check is in state Failed",
@@ -89,12 +89,12 @@ func TestEmail(t *testing.T) {
 			defer log.SetOutput(os.Stderr)
 
 			called := false
-			sendEmailMsg = func(smtpServer string, user string, password string, msg *mail.Msg) error {
+			sendEmailMsg = func(ctx context.Context, smtpServer string, user string, password string, msg *mail.Msg) error {
 				called = true
 				if smtpServer != tt.smtpServer {
 					t.Errorf("Expected addr %s, got %s", tt.smtpServer, smtpServer)
 				}
-				
+
 				var msgBuf bytes.Buffer
 				_, err := msg.WriteTo(&msgBuf)
 				if err != nil {
@@ -105,7 +105,7 @@ func TestEmail(t *testing.T) {
 				if !strings.Contains(msgStr, "From: <"+tt.expectedFrom+">") {
 					t.Errorf("Expected from %s, got message:\n%s", tt.expectedFrom, msgStr)
 				}
-				
+
 				for _, expectedTo := range tt.expectedTo {
 					if !strings.Contains(msgStr, "<"+expectedTo+">") && !strings.Contains(msgStr, expectedTo) {
 						t.Errorf("Expected To %s, got message:\n%s", expectedTo, msgStr)
