@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	chkr "github.com/tweithoener/checker"
 )
@@ -58,7 +59,10 @@ func Proxy(method, request, proxy string, expected int) chkr.Check {
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Failed to parse proxy URL: %v", err)
 		}
-		cl := &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)}}
+		cl := &http.Client{
+			Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)},
+			Timeout:   20 * time.Second,
+		}
 		resp, err := proxyDoRequest(cl, req)
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Request failed: %v", err)

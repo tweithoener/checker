@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	chkr "github.com/tweithoener/checker"
 )
@@ -48,7 +49,8 @@ func Http(method, url string, expected int) chkr.Check {
 			return chkr.Fail, fmt.Sprintf("Failed to create request: %v", err)
 		}
 
-		resp, err := http.DefaultClient.Do(req)
+		cl := http.Client{Timeout: 20 * time.Second}
+		resp, err := cl.Do(req)
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Request failed: %v", err)
 		}
