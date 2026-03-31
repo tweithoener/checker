@@ -15,7 +15,7 @@ import (
 func (chkr *Checker) peerCheck(address string) Check {
 	cl := http.Client{Timeout: 20 * time.Second}
 	return func(ctx context.Context, cs CheckState) (s State, message string) {
-		body := []byte{}
+		var body []byte
 		var err error
 		snap := chkr.snapshot().PeerStates
 		body, err = json.Marshal(snap)

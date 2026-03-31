@@ -87,7 +87,9 @@ var runPing = func(ctx context.Context, address string, timeout time.Duration) (
 	if d, ok := ctx.Deadline(); ok && d.Before(deadline) {
 		deadline = d
 	}
-	c.SetDeadline(deadline)
+	if err := c.SetDeadline(deadline); err != nil {
+		return 0, fmt.Errorf("can't set deadline on context: %w", err)
+	}
 
 	var target net.Addr = dest // Default to *net.IPAddr (for Raw Sockets)
 	if isUdp {
