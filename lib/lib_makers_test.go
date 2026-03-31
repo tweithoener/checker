@@ -59,7 +59,7 @@ func TestNotifierMakers(t *testing.T) {
 		maker chkr.NotifierMaker
 		json  string
 	}{
-		{logginMkr, `{"Prefix": "LOG: "}`},
+		{loggingMkr, `{"Prefix": "LOG: "}`},
 		{debugMkr, `{"Prefix": "DEBUG: "}`},
 		{pushoverMkr, `{"Prefix": "ERR: ", "App": "app-token", "Recipient": "user-token"}`},
 		{emailMkr, `{"SmtpServer": "smtp.example.com:587", "User": "user", "Password": "pwd", "To": ["admin@example.com"], "Template": "Body"}`},

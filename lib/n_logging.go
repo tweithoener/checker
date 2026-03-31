@@ -16,7 +16,7 @@ type LoggingArgs struct {
 
 type loggingMaker struct{}
 
-var logginMkr = loggingMaker{}
+var loggingMkr = loggingMaker{}
 
 func (loggingMaker) Maker() string {
 	return "Logging"
