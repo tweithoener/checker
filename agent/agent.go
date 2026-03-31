@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"slices"
 	"sync"
 	"time"
 
@@ -106,7 +107,8 @@ func (a *AIAgent) Notifier() chkr.Notifier {
 		}
 
 		// Grab a copy of the current buffer history for analysis
-		events := a.buffer.Events()
+		eventsSeq := a.buffer.Events()
+		events := slices.Collect(eventsSeq)
 		analysisTime := TimeNow()
 		previousAnalysis := a.lastAnalysis
 

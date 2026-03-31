@@ -1,6 +1,8 @@
 package agent
 
 import (
+	"iter"
+	"slices"
 	"sync"
 
 	chkr "github.com/tweithoener/checker"
@@ -57,21 +59,22 @@ func (b *EventBuffer) Add(cs chkr.CheckState) {
 	b.isDirty = true
 }
 
-// Events returns a chronologically ordered copy of the currently buffered events.
-// It caches the result, making subsequent calls extremely fast until a new event is added.
-func (b *EventBuffer) Events() []Event {
+// Events returns a chronologically ordered iterator of the currently buffered events.
+// It caches the underlying slice, making subsequent calls extremely fast and allocation-free
+// until a new event is added. The returned iterator is safe for concurrent read access.
+func (b *EventBuffer) Events() iter.Seq[Event] {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	if !b.isDirty {
-		return b.cachedEvents
+		return slices.Values(b.cachedEvents)
 	}
 
 	res := make([]Event, 0, b.count)
 	if b.count == 0 {
 		b.cachedEvents = res
 		b.isDirty = false
-		return res
+		return slices.Values(res)
 	}
 
 	if b.head < b.tail {
@@ -83,7 +86,7 @@ func (b *EventBuffer) Events() []Event {
 
 	b.cachedEvents = res
 	b.isDirty = false
-	return res
+	return slices.Values(res)
 }
 
 // Len returns the current number of events in the buffer.

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -200,7 +201,7 @@ func TestAIAgent_Integration(t *testing.T) {
 
 		shouldTrigger := agent.trigger.ShouldTrigger(agent.buffer, agent.lastAnalysis)
 		if shouldTrigger {
-			eventsToAnalyze := agent.buffer.Events()
+			eventsToAnalyze := slices.Collect(agent.buffer.Events())
 			prevAnalysis := agent.lastAnalysis
 			agent.lastAnalysis = ev.ReceivedAt // Use simulated time for lastAnalysis
 

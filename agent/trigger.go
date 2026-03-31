@@ -21,7 +21,7 @@ func (t *VolumeTrigger) ShouldTrigger(buffer *EventBuffer, lastAnalysis time.Tim
 	}
 
 	newCount := 0
-	for _, ev := range buffer.Events() {
+	for ev := range buffer.Events() {
 		if ev.ReceivedAt.After(lastAnalysis) {
 			newCount++
 		}
@@ -46,7 +46,7 @@ func (t *TimeTrigger) ShouldTrigger(buffer *EventBuffer, lastAnalysis time.Time)
 
 	// We only trigger if time has passed AND there are actually new events to analyze
 	hasNewEvents := false
-	for _, ev := range buffer.Events() {
+	for ev := range buffer.Events() {
 		if ev.ReceivedAt.After(lastAnalysis) {
 			hasNewEvents = true
 			break
@@ -68,7 +68,7 @@ func NewStateTrigger(state chkr.State, threshold int) *StateTrigger {
 
 func (t *StateTrigger) ShouldTrigger(buffer *EventBuffer, lastAnalysis time.Time) bool {
 	count := 0
-	for _, ev := range buffer.Events() {
+	for ev := range buffer.Events() {
 		if !lastAnalysis.IsZero() && !ev.ReceivedAt.After(lastAnalysis) {
 			continue // Skip events already analyzed
 		}

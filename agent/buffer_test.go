@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"slices"
 	"testing"
 
 	chkr "github.com/tweithoener/checker"
@@ -29,7 +30,7 @@ func TestEventBuffer_RingBehavior(t *testing.T) {
 		t.Fatalf("expected len 3, got %d", b.Len())
 	}
 
-	evs := b.Events()
+	evs := slices.Collect(b.Events())
 	if evs[0].Name != "check1" || evs[2].Name != "check3" {
 		t.Fatalf("unexpected event order before wrap: %v", evs)
 	}
@@ -41,7 +42,7 @@ func TestEventBuffer_RingBehavior(t *testing.T) {
 		t.Fatalf("expected len 3 after wrap, got %d", b.Len())
 	}
 
-	evsAfterWrap := b.Events()
+	evsAfterWrap := slices.Collect(b.Events())
 	if evsAfterWrap[0].Name != "check2" || evsAfterWrap[2].Name != "check4" {
 		t.Fatalf("unexpected event order after wrap: %v", evsAfterWrap)
 	}
@@ -51,13 +52,13 @@ func TestEventBuffer_Cache(t *testing.T) {
 	b := NewEventBuffer(5)
 	b.Add(chkr.CheckState{Name: "check1", State: chkr.OK})
 
-	evs1 := b.Events()
+	evs1 := slices.Collect(b.Events())
 
 	if b.isDirty {
 		t.Fatal("buffer should not be dirty after Events() call")
 	}
 
-	evs2 := b.Events()
+	evs2 := slices.Collect(b.Events())
 
 	// Simply verifying that len is stable and cache isn't broken
 	if len(evs1) != 1 || len(evs2) != 1 {
@@ -70,7 +71,7 @@ func TestEventBuffer_Cache(t *testing.T) {
 		t.Fatal("buffer should be dirty after Add() call")
 	}
 
-	evs3 := b.Events()
+	evs3 := slices.Collect(b.Events())
 	if len(evs3) != 2 {
 		t.Fatalf("expected 2 events, got %d", len(evs3))
 	}
