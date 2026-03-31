@@ -3,6 +3,7 @@ package lib
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	chkr "github.com/tweithoener/checker"
 )
@@ -35,7 +36,7 @@ func (sshMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 	if !ok {
 		return nil, fmt.Errorf("configured arguments are not Ssh arguments")
 	}
-	return Ssh(defaultAnalyzer, args.Host, args.User, args.Command), nil
+	return Ssh(defaultAnalyzer, args.Host, args.User, args.Command)
 }
 
 // Ssh returns a check that executes the given command on the remote host using the
@@ -49,10 +50,16 @@ func (sshMaker) FromConfig(c chkr.CheckConfig) (chkr.Check, error) {
 //
 // Note: Make sure public key authentication and host key authorization is configured correctly
 // for the user running checker for the remote machine.
-func Ssh(analyze func(exitCode int, output string) (chkr.State, string), host, user, command string) chkr.Check {
+func Ssh(analyze func(exitCode int, output string) (chkr.State, string), host, user, command string) (chkr.Check, error) {
+	if strings.HasPrefix(user, "-") {
+		return nil, fmt.Errorf("illegal argument (potential option injection detected in user): %v", user)
+	}
+	if strings.HasPrefix(host, "-") {
+		return nil, fmt.Errorf("illegal argument (potential option injection detected in host): %v", host)
+	}
 	uh := host
 	if user != "" {
 		uh = user + "@" + host
 	}
-	return Cmd(analyze, "ssh", "-oBatchmode=yes", uh, command)
+	return Cmd(analyze, "ssh", "-oBatchmode=yes", uh, command), nil
 }

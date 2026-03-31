@@ -49,7 +49,10 @@ func TestSsh_WithUser(t *testing.T) {
 	expectedArgs := "-oBatchmode=yes admin@example.com uptime"
 	execCommandContext = mockSshExecCommand(expectedArgs)
 
-	chk := Ssh(nil, "example.com", "admin", "uptime")
+	chk, err := Ssh(nil, "example.com", "admin", "uptime")
+	if err != nil {
+		t.Fatalf("Ssh failed: %v", err)
+	}
 	
 	// If the arguments are wrong, the mockSshExecCommand will panic and fail the test.
 	state, _ := chk(context.Background(), chkr.CheckState{})
@@ -67,11 +70,64 @@ func TestSsh_WithoutUser(t *testing.T) {
 	expectedArgs := "-oBatchmode=yes example.com df -h"
 	execCommandContext = mockSshExecCommand(expectedArgs)
 
-	chk := Ssh(nil, "example.com", "", "df -h")
+	chk, err := Ssh(nil, "example.com", "", "df -h")
+	if err != nil {
+		t.Fatalf("Ssh failed: %v", err)
+	}
 	
 	state, _ := chk(context.Background(), chkr.CheckState{})
 
 	if state != chkr.OK {
 		t.Errorf("Expected OK, got %v", state)
+	}
+}
+
+func TestSsh_Injection(t *testing.T) {
+	// Test User Injection
+	_, err := Ssh(nil, "example.com", "-oProxyCommand=touch /tmp/evil", "uptime")
+	if err == nil {
+		t.Fatal("Expected error for username starting with '-'")
+	}
+	if !strings.Contains(err.Error(), "potential option injection detected in user") {
+		t.Errorf("Expected 'potential option injection detected in user' in error message, got: %v", err)
+	}
+
+	// Test Host Injection
+	_, err = Ssh(nil, "-oProxyCommand=touch /tmp/evil", "", "uptime")
+	if err == nil {
+		t.Fatal("Expected error for host starting with '-'")
+	}
+	if !strings.Contains(err.Error(), "potential option injection detected in host") {
+		t.Errorf("Expected 'potential option injection detected in host' in error message, got: %v", err)
+	}
+}
+
+func TestSshMaker_Injection(t *testing.T) {
+	// Test User Injection via JSON
+	jsonConfig := `{"Host": "example.com", "User": "-oProxyCommand=touch /tmp/evil", "Command": "uptime"}`
+	args, err := sshMkr.UnmarshalArgs([]byte(jsonConfig))
+	if err != nil {
+		t.Fatalf("UnmarshalArgs failed: %v", err)
+	}
+	_, err = sshMkr.FromConfig(chkr.CheckConfig{Args: args.(SshArgs)})
+	if err == nil {
+		t.Fatal("Expected FromConfig to fail with username starting with '-'")
+	}
+	if !strings.Contains(err.Error(), "potential option injection detected in user") {
+		t.Errorf("Expected 'potential option injection detected in user' in error message, got: %v", err)
+	}
+
+	// Test Host Injection via JSON
+	jsonConfig = `{"Host": "-oProxyCommand=touch /tmp/evil", "User": "admin", "Command": "uptime"}`
+	args, err = sshMkr.UnmarshalArgs([]byte(jsonConfig))
+	if err != nil {
+		t.Fatalf("UnmarshalArgs failed: %v", err)
+	}
+	_, err = sshMkr.FromConfig(chkr.CheckConfig{Args: args.(SshArgs)})
+	if err == nil {
+		t.Fatal("Expected FromConfig to fail with host starting with '-'")
+	}
+	if !strings.Contains(err.Error(), "potential option injection detected in host") {
+		t.Errorf("Expected 'potential option injection detected in host' in error message, got: %v", err)
 	}
 }
