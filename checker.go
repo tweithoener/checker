@@ -158,9 +158,7 @@ func (chkr *Checker) Start() error {
 	ticker := time.NewTicker(te)
 	log.Printf("Checker starts with %d checks. Running a check every %d millis.", cnt, te/time.Millisecond)
 
-	chkr.wg.Add(1)
-	go func() {
-		defer chkr.wg.Done()
+	chkr.wg.Go(func() {
 		defer ticker.Stop()
 
 		idx := 0
@@ -173,15 +171,12 @@ func (chkr *Checker) Start() error {
 				idx = (idx + 1) % cnt
 			}
 		}
-	}()
+	})
 	return nil
 }
 
 func (chkr *Checker) runCheck(meta *meta) {
-	chkr.wg.Add(1)
-	go func() {
-		defer chkr.wg.Done()
-
+	chkr.wg.Go(func() {
 		if !meta.mu.TryLock() {
 			log.Printf("Check %s still running - skipping\n", meta.Name)
 			return
@@ -217,7 +212,7 @@ func (chkr *Checker) runCheck(meta *meta) {
 				}(n, snap)
 			}
 		}
-	}()
+	})
 }
 
 // Shutdown gracefully stops the Checker, bounded by the provided context.

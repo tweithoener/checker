@@ -75,14 +75,13 @@ func (chkr *Checker) startHttpServer() {
 		Handler: mux,
 	}
 
-	chkr.wg.Add(1)
-	go func() {
+	chkr.wg.Go(func() {
 		defer chkr.wg.Done()
 		log.Printf("Starting checker HTTP server on %s", chkr.serverConfig.Listen)
 		if err := chkr.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Printf("HTTP server error: %v", err)
 		}
-	}()
+	})
 }
 
 func (chkr *Checker) stopHttpServer(ctx context.Context) {
