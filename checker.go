@@ -146,22 +146,22 @@ func (chkr *Checker) Start() error {
 	if chkr.running {
 		return errors.New("checker is already running")
 	}
-	if len(chkr.checks) == 0 {
+	cnt := len(chkr.checks)
+	if cnt == 0 {
 		return errors.New("no checks, no peers")
 	}
 	chkr.running = true
 	chkr.startHttpServer()
 
+	te := chkr.interval / time.Duration(cnt)
+	te = max(te, 10*time.Millisecond)
+	ticker := time.NewTicker(te)
+	log.Printf("Checker starts with %d checks. Running a check every %d millis.", cnt, te/time.Millisecond)
+
 	chkr.wg.Add(1)
 	go func() {
 		defer chkr.wg.Done()
-
-		cnt := len(chkr.checks)
-		te := chkr.interval / time.Duration(cnt)
-		ticker := time.NewTicker(te)
 		defer ticker.Stop()
-
-		log.Printf("Checker starts with %d checks. Running a check every %d millis.", cnt, te/time.Millisecond)
 
 		idx := 0
 		for {
@@ -189,7 +189,7 @@ func (chkr *Checker) runCheck(meta *meta) {
 		defer meta.mu.Unlock()
 
 		now := time.Now()
-		
+
 		checkCtx, cancel := context.WithTimeout(chkr.ctx, 30*time.Second)
 		defer cancel()
 		s, msg := meta.call(checkCtx, meta.CheckState)
