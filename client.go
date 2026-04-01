@@ -13,7 +13,9 @@ import (
 
 // peer returns a check that returns the state of a remote checker instance.
 func (chkr *Checker) peerCheck(address string) Check {
-	cl := http.Client{Timeout: 20 * time.Second}
+	if chkr.httpClient == nil {
+		chkr.httpClient = &http.Client{Timeout: 20 * time.Second}
+	}
 	return func(ctx context.Context, cs CheckState) (s State, message string) {
 		var body []byte
 		var err error
@@ -29,7 +31,7 @@ func (chkr *Checker) peerCheck(address string) Check {
 		}
 		req.Header.Set("Accept", "application/json")
 
-		resp, err := cl.Do(req)
+		resp, err := chkr.httpClient.Do(req)
 		if err != nil {
 			return Fail, fmt.Sprintf("Request failed: %v", err)
 		}

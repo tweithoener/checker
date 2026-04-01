@@ -60,6 +60,9 @@ func Proxy(method, request, proxy string, expected int) chkr.Check {
 		if err != nil {
 			return chkr.Fail, fmt.Sprintf("Failed to parse proxy URL: %v", err)
 		}
+
+		// intentionally creating a new client for every check as we want
+		// to check reachability, tls handshake and proxy response
 		cl := &http.Client{
 			Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)},
 			Timeout:   20 * time.Second,

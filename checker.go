@@ -35,6 +35,7 @@ type Checker struct {
 
 	serverConfig ServerConfig
 	httpServer   *http.Server
+	httpClient   *http.Client
 }
 
 // State represents the result state of a check.
