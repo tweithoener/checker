@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"os"
 	"time"
 
@@ -12,18 +12,25 @@ import (
 )
 
 func main() {
+	// Configure global structured logging as JSON for this example.
+	// This will affect both the checker core and the structured log notifier.
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	// Open the configuration file
 	f, err := os.Open("config.json")
 	if err != nil {
-		log.Fatalf("can't open config file: %v", err)
+		slog.Error("can't open config file", "error", err)
+		os.Exit(1)
 	}
 	defer f.Close()
 
 	c := chkr.New()
-	
+
 	// Load checks and notifiers from the JSON config
 	if err := c.ReadConfig(f); err != nil {
-		log.Fatalf("can't configure checker from config file: %v", err)
+		slog.Error("can't configure checker from config file", "error", err)
+		os.Exit(1)
 	}
 
 	c.SetInterval(5 * time.Second)

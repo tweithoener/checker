@@ -7,7 +7,7 @@
       "Args": {
         "Method": "GET",
         "Url": "http://example.com",
-        "Expected": 200
+        "Expected": 201
       }
     }
   ],
@@ -18,7 +18,10 @@
         "Notifier": {
           "Maker": "Logging",
           "Args": {
-            "Prefix": "ALERT: "
+            "Attributes": {
+              "env": "production",
+              "team": "backend"
+            }
           }
         }
       }

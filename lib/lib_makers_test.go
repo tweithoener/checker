@@ -59,11 +59,12 @@ func TestNotifierMakers(t *testing.T) {
 		maker chkr.NotifierMaker
 		json  string
 	}{
-		{loggingMkr, `{"Prefix": "LOG: "}`},
-		{debugMkr, `{"Prefix": "DEBUG: "}`},
-		{pushoverMkr, `{"Prefix": "ERR: ", "App": "app-token", "Recipient": "user-token"}`},
-		{emailMkr, `{"SmtpServer": "smtp.example.com:587", "User": "user", "Password": "pwd", "To": ["admin@example.com"], "Template": "Body"}`},
-		{lessMkr, `{"Notifier": {"Maker": "Logging", "Args": {"Prefix": "LOG: "}}}`},
+		{loggingMkr, `{"Attributes": {"env": "test"}}`},
+				{debugMkr, `{"Prefix": "DEBUG: "}`},
+				{pushoverMkr, `{"Prefix": "ERR: ", "App": "app-token", "Recipient": "user-token"}`},
+				{emailMkr, `{"SmtpServer": "smtp.example.com:587", "User": "user", "Password": "pwd", "To": ["admin@example.com"], "Template": "Body"}`},
+				{lessMkr, `{"Notifier": {"Maker": "Logging", "Args": {"Attributes": {"env": "test"}}}}`},
+
 	}
 
 	for _, tt := range tests {

@@ -78,7 +78,7 @@ func TestEmail(t *testing.T) {
 			expectedSubj: "[Checker] Failed test-check",
 			expectedBody: "Check test-check is in state Failed",
 			mockErr:      context.DeadlineExceeded,
-			expectLogMsg: "Can't send email notification",
+			expectLogMsg: "can't send email notification",
 		},
 	}
 

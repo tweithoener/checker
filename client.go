@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -22,7 +22,7 @@ func (chkr *Checker) peerCheck(address string) Check {
 		snap := chkr.snapshot().PeerStates
 		body, err = json.Marshal(snap)
 		if err != nil {
-			log.Printf("can't marshal json PeerStates: %v", err)
+			slog.Error("can't marshal json PeerStates", "error", err)
 		}
 
 		req, err := http.NewRequestWithContext(ctx, "POST", "http://"+address, bytes.NewReader(body))

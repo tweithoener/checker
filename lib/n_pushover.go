@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 
 	po "github.com/gregdel/pushover"
 	chkr "github.com/tweithoener/checker"
@@ -65,7 +65,7 @@ func Pushover(prefix, app, recipient string) chkr.Notifier {
 		}
 
 		if _, err := sendPushoverMessage(puApp, message, puRecipient); err != nil {
-			log.Printf("Can't send pushover notification: %v", err)
+			slog.Error("can't send pushover notification", "error", err)
 		}
 	}
 }

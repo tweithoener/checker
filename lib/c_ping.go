@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
-	"log"
+	"log/slog"
 	"net"
 	"time"
 
@@ -116,7 +116,7 @@ var runPing = func(ctx context.Context, address string, timeout time.Duration) (
 			continue
 		}
 		if pkt.ID != id {
-			log.Printf("want %x\n got %x", id, pkt.ID)
+			slog.Warn("unexpected ICMP ID", "expected", fmt.Sprintf("%x", id), "got", fmt.Sprintf("%x", pkt.ID))
 			continue // Not our Ping
 		}
 		return duration, nil

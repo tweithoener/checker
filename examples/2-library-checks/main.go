@@ -16,7 +16,9 @@ func main() {
 	// 2. Add checks and notifier from the standard library
 	c.AddCheck("Ping Webserver", lib.Ping("example.com", 50, 300))
 	c.AddCheck("Check My Website ", lib.Http("GET", "https://example.com/", http.StatusOK))
-	c.AddNotifier(lib.Logging("ALERT: "))
+
+	// lib.Logging takes an optional *slog.Logger. Passing nil uses slog.Default().
+	c.AddNotifier(lib.Logging(nil))
 
 	// 3. Set the check interval and start
 	c.SetInterval(2 * time.Second)

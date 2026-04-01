@@ -49,9 +49,13 @@ func main() {
 		return chkr.Fail, "Something went wrong!"
 	})
 
-	// 3. Add a simple console notifier
+	// 3. Add a simple structured console notifier
 	c.AddNotifier(func(ctx context.Context, cs chkr.CheckState) {
-		fmt.Printf("[%s] Check '%s' state changed to: %s (%s)\n", time.Now().Format(time.RFC3339), cs.Name, cs.State, cs.Message)
+		slog.Info("notifier event",
+			"check", cs.Name,
+			"state", cs.State,
+			"message", cs.Message,
+		)
 	})
 
 	// 4. Start the engine
@@ -87,8 +91,8 @@ func main() {
 	c.AddCheck("Ping Webserver", lib.Ping("example.com", 50, 300))
 	c.AddCheck("Check My Website", lib.Http("GET", "https://example.com/", http.StatusOK))
 	
-	// Add an out-of-the-box notifier
-	c.AddNotifier(lib.Logging("ALERT: "))
+	// Add an out-of-the-box structured logging notifier
+	c.AddNotifier(lib.Logging(nil))
 
 	c.SetInterval(5 * time.Second)
 	c.Start()

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 )
@@ -39,7 +39,7 @@ func (chkr *Checker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		tpl := template.Must(template.New("checker status page").Parse(html))
 		if err := tpl.Execute(w, chkr.snapshot()); err != nil {
-			log.Printf("Error executing template: %v", err)
+			slog.Error("error executing template", "error", err)
 		}
 		return
 	}
@@ -55,8 +55,8 @@ func (chkr *Checker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", "application/json")
 		snap := chkr.snapshot()
-		if err := json.NewEncoder(w).Encode(snap); err != nil { // <-- Todo concurrent map iteration / write
-			log.Printf("Error encoding state: %v", err)
+		if err := json.NewEncoder(w).Encode(snap); err != nil {
+			slog.Error("error encoding state", "error", err)
 		}
 		return
 	}
@@ -77,9 +77,9 @@ func (chkr *Checker) startHttpServer() {
 
 	chkr.wg.Go(func() {
 		defer chkr.wg.Done()
-		log.Printf("Starting checker HTTP server on %s", chkr.serverConfig.Listen)
+		slog.Info("starting checker HTTP server", "address", chkr.serverConfig.Listen)
 		if err := chkr.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Printf("HTTP server error: %v", err)
+			slog.Error("HTTP server error", "error", err)
 		}
 	})
 }

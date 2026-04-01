@@ -67,8 +67,8 @@ func main() {
 	c.AddCheck("API Health", lib.Http("GET", "https://api.example.com/health", 200))
 	c.AddCheck("System CPU", lib.Cpu(75.0, 90.0))
 
-	// Add a built-in notifier (wrapped in rate-limiting)
-	logger := lib.Logging("[PROD] ")
+	// Add a built-in structured logging notifier (wrapped in rate-limiting)
+	logger := lib.Logging(nil)
 	c.AddNotifier(lib.Less(logger))
 
 	c.SetInterval(30 * time.Second)
@@ -100,11 +100,12 @@ Prefer no recompiles? You can define everything in a `config.json`. The `lib` pa
       "Maker": "Less",
       "Args": {
         "Notifier": {
-          "Maker": "Pushover",
+          "Maker": "Logging",
           "Args": {
-            "Prefix": "[PROD]",
-            "App": "YOUR_APP_TOKEN",
-            "Recipient": "YOUR_USER_KEY"
+            "Attributes": {
+              "env": "production",
+              "team": "backend"
+            }
           }
         }
       }

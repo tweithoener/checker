@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"strconv"
@@ -79,7 +79,7 @@ func WithTemplate(mailTemplate string) EmailOption {
 	return func(o *emailOptions) {
 		tmpl, err := template.New("email").Parse(mailTemplate)
 		if err != nil {
-			log.Printf("Can't parse email template: %v", err)
+			slog.Error("can't parse email template", "error", err)
 			return
 		}
 		o.template = tmpl
@@ -153,30 +153,30 @@ func Email(smtpServer, user, password string, to []string, opts ...EmailOption) 
 
 	return func(ctx context.Context, cs chkr.CheckState) {
 		if len(to) == 0 {
-			log.Printf("Can't send email: no recipients")
+			slog.Error("can't send email: no recipients")
 			return
 		}
 
 		var body bytes.Buffer
 		if err := options.template.Execute(&body, cs); err != nil {
-			log.Printf("Can't execute email template: %v", err)
+			slog.Error("can't execute email template", "error", err)
 			return
 		}
 
 		m := mail.NewMsg()
 		if err := m.From(options.from); err != nil {
-			log.Printf("Can't set from address: %v", err)
+			slog.Error("can't set from address", "error", err)
 			return
 		}
 		if err := m.To(to...); err != nil {
-			log.Printf("Can't set to addresses: %v", err)
+			slog.Error("can't set to addresses", "error", err)
 			return
 		}
 		m.Subject(fmt.Sprintf("[Checker] %s %s", cs.State, cs.Name))
 		m.SetBodyString(mail.TypeTextPlain, body.String())
 
 		if err := sendEmailMsg(ctx, smtpServer, user, password, m); err != nil {
-			log.Printf("Can't send email notification: %v", err)
+			slog.Error("can't send email notification", "error", err)
 		}
 	}
 }

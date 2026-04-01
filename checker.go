@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"sync"
@@ -52,7 +52,7 @@ const (
 func New() *Checker {
 	hostname, err := os.Hostname()
 	if err != nil {
-		log.Printf("can't get hostname: %v", err)
+		slog.Error("can't get hostname", "error", err)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Checker{
@@ -157,7 +157,10 @@ func (chkr *Checker) Start() error {
 	te := chkr.interval / time.Duration(cnt)
 	te = max(te, 10*time.Millisecond)
 	ticker := time.NewTicker(te)
-	log.Printf("Checker starts with %d checks. Running a check every %d millis.", cnt, te/time.Millisecond)
+	slog.Info("checker starts",
+		"checks_count", cnt,
+		"interval_ms", te.Milliseconds(),
+	)
 
 	chkr.wg.Go(func() {
 		defer ticker.Stop()
@@ -179,7 +182,7 @@ func (chkr *Checker) Start() error {
 func (chkr *Checker) runCheck(meta *meta) {
 	chkr.wg.Go(func() {
 		if !meta.mu.TryLock() {
-			log.Printf("Check %s still running - skipping\n", meta.Name)
+			slog.Warn("check still running - skipping", "check_name", meta.Name)
 			return
 		}
 		defer meta.mu.Unlock()
@@ -237,9 +240,9 @@ func (chkr *Checker) Shutdown(ctx context.Context) error {
 
 	select {
 	case <-allDone:
-		log.Println("Done. Clean shutdown.")
+		slog.Info("done. clean shutdown")
 	case <-ctx.Done():
-		log.Println("Grace period expired. Forced stop of remaining checks.")
+		slog.Warn("grace period expired. forced stop of remaining checks")
 		chkr.cancel()
 	}
 	return nil
@@ -259,7 +262,7 @@ func (chkr *Checker) SetName(name string) {
 		var err error
 		name, err = os.Hostname()
 		if err != nil {
-			log.Printf("can't get system's hostname: %v", err)
+			slog.Error("can't get system's hostname", "error", err)
 			name = ""
 		}
 	}

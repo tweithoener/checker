@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,30 +14,34 @@ import (
 )
 
 func main() {
+	// Configure global structured logging
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, nil)))
+
 	configPath := flag.String("config", "one.json", "path to configuration file (e.g. one.json or another.json)")
 	flag.Parse()
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
 	f, err := os.Open(*configPath)
 	if err != nil {
-		log.Fatalf("can't open config file: %v", err)
+		slog.Error("can't open config file", "error", err)
+		os.Exit(1)
 	}
 	defer f.Close()
 
 	c := chkr.New()
 	if err := c.ReadConfig(f); err != nil {
-		log.Fatalf("can't configure checker from config file: %v", err)
+		slog.Error("can't configure checker from config file", "error", err)
+		os.Exit(1)
 	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
 	c.SetInterval(5 * time.Second)
 	c.Start()
-	log.Printf("Started checker with config: %s", *configPath)
-	log.Println("Press Ctrl+C to exit")
+	slog.Info("started checker", "config", *configPath)
 
 	<-ctx.Done()
-	log.Println("Shutting down...")
+	slog.Info("shutting down...")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
