@@ -76,7 +76,6 @@ func (chkr *Checker) startHttpServer() {
 	}
 
 	chkr.wg.Go(func() {
-		defer chkr.wg.Done()
 		slog.Info("starting checker HTTP server", "address", chkr.serverConfig.Listen)
 		if err := chkr.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("HTTP server error", "error", err)
